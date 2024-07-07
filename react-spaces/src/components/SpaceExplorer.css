@@ -1,0 +1,15 @@
+.space-explorer {
+    margin-bottom: 20px;
+}
+
+.upload-form {
+    margin-top: 20px;
+}
+
+.space-explorer h3 {
+    margin-top: 20px;
+}
+
+.space-explorer .list-group-item {
+    cursor: pointer;
+}

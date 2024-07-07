@@ -1,0 +1,25 @@
+.app-container {
+    padding: 20px;
+}
+
+.create-space-form {
+    margin-bottom: 20px;
+}
+
+.space-explorer {
+    margin-bottom: 20px;
+}
+
+.chat-bot, .admin-panel {
+    margin-bottom: 20px;
+}
+
+.chat-panel, .admin-panel {
+    border-left: 1px solid #ccc;
+    padding-left: 20px;
+}
+
+.sidebar {
+    border-right: 1px solid #ccc;
+    padding-right: 20px;
+}

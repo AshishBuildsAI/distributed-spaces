@@ -1,0 +1,4 @@
+flask==3.0.3
+dash==2.10.0
+dash-bootstrap-components==1.4.0
+werkzeug==3.0.0

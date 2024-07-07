@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { ListGroup, Form, Button } from 'react-bootstrap';
+import { ListGroup, Form, Button, ProgressBar, Card } from 'react-bootstrap';
 import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
-
+import 'bootswatch/dist/darkly/bootstrap.css'
 const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
     const [spaces, setSpaces] = useState([]);
     const [file, setFile] = useState(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
     const [selectedSpaceState, setSelectedSpaceState] = useState(null);
 
@@ -15,12 +16,16 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
 
     const fetchSpaces = async () => {
         const response = await axios.get('http://127.0.0.1:5000/list_spaces');
-        setSpaces(response.data.spaces);
+        const spacesWithCounts = await Promise.all(response.data.spaces.map(async (space) => {
+            const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${space}`);
+            return { name: space, fileCount: filesResponse.data.files.length };
+        }));
+        setSpaces(spacesWithCounts);
     };
 
     const fetchFiles = (space) => {
-        setSelectedSpace(space); // Update the selected space in App component
-        setSelectedSpaceState(space); // Update local state
+        setSelectedSpace(space.name); // Update the selected space in App component
+        setSelectedSpaceState(space.name); // Update local state
         setSelectedFile(null); // Clear selected file when space is changed
     };
 
@@ -33,12 +38,18 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
+                    onUploadProgress: (progressEvent) => {
+                        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        setUploadProgress(percentCompleted);
+                    },
                 });
                 alert(response.data.message);
                 if (fileInputRef.current) {
                     fileInputRef.current.value = ''; // Clear file input
                 }
                 setFile(null); // Clear file state
+                setUploadProgress(0); // Reset upload progress
+                fetchSpaces(); // Refresh space list to update file counts
             } catch (error) {
                 alert('Error uploading file');
             }
@@ -55,14 +66,14 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
                     <ListGroup.Item 
                         key={index} 
                         onClick={() => fetchFiles(space)}
-                        active={selectedSpaceState === space}
+                        active={selectedSpaceState === space.name}
                     >
-                        {space}
+                        {space.name} ({space.fileCount} files)
                     </ListGroup.Item>
                 ))}
             </ListGroup>
             {selectedSpaceState && (
-                <Form className="upload-form">
+                <Form className="upload-form mt-3">
                     <Form.Group controlId="formFile" className="mb-3">
                         <Form.Label>Upload File</Form.Label>
                         <Form.Control 
@@ -71,7 +82,10 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
                             ref={fileInputRef}
                         />
                     </Form.Group>
-                    <Button onClick={uploadFile}>Upload</Button>
+                    <Button onClick={uploadFile} variant="primary">Upload</Button>
+                    {uploadProgress > 0 && (
+                        <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} className="mt-3" />
+                    )}
                 </Form>
             )}
         </div>

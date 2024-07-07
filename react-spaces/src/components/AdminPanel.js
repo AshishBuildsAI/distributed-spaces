@@ -33,13 +33,13 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     };
 
     return (
-        <Card className="admin-panel">
-            <Card.Header>Admin Panel</Card.Header>
+        <Card className="admin-panel card text-white bg-primary mb-3">
+            <Card.Header>Files in {selectedSpace}</Card.Header>
             <Card.Body>
-                <h3>Files in {selectedSpace}</h3>
-                <ListGroup>
+                <ListGroup class="list-group">
                     {files.map((file, index) => (
                         <ListGroup.Item 
+                            class="list-group-item list-group-item-primary d-flex justify-content-between align-items-center"
                             key={index} 
                             onClick={() => setSelectedFile(file)}
                             active={selectedFile === file}
@@ -49,7 +49,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                     ))}
                 </ListGroup>
                 {selectedFile && (
-                    <Button className="mt-2" onClick={indexFile}>Index this file</Button>
+                    <Button className="mt-2 btn btn-warning" onClick={indexFile}>Index this file</Button>
                 )}
             </Card.Body>
         </Card>

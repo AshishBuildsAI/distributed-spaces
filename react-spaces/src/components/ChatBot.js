@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Form, Button, InputGroup, Card, ListGroup } from 'react-bootstrap';
 import './ChatBot.css'; // Ensure this file exists and is correctly imported
@@ -6,15 +6,23 @@ import './ChatBot.css'; // Ensure this file exists and is correctly imported
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [query, setQuery] = useState('');
     const [messages, setMessages] = useState([]);
+    const chatListRef = useRef(null);
+
+    useEffect(() => {
+        // Scroll to bottom on new messages
+        if (chatListRef.current) {
+            chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const askQuestion = async () => {
         const userMessage = { text: query, isUser: true };
         setMessages([...messages, userMessage]);
 
         try {
-            const response = await axios.post('http://127.0.0.1:5000/chat', { 
+            const response = await axios.post('http://localhost:5000/chat', {
                 space: selectedSpace,
-                query 
+                query
             });
             const botMessage = { text: response.data.response, isUser: false };
             setMessages([...messages, userMessage, botMessage]);
@@ -30,10 +38,10 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         <Card className="chat-bot">
             <Card.Header>Chat Bot</Card.Header>
             <Card.Body className="chat-body">
-                <ListGroup className="chat-list">
+                <ListGroup className="chat-list" ref={chatListRef}>
                     {messages.map((message, index) => (
-                        <ListGroup.Item 
-                            key={index} 
+                        <ListGroup.Item
+                            key={index}
                             className={message.isUser ? 'user-message' : 'bot-message'}
                         >
                             {message.text}
@@ -41,11 +49,11 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                     ))}
                 </ListGroup>
                 <InputGroup className="mt-3">
-                    <Form.Control 
-                        type="text" 
-                        placeholder="Ask a question" 
-                        value={query} 
-                        onChange={(e) => setQuery(e.target.value)} 
+                    <Form.Control
+                        type="text"
+                        placeholder="Ask a question"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
                     />
                     <Button variant="primary" onClick={askQuestion}>Ask</Button>
                 </InputGroup>

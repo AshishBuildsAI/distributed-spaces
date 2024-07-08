@@ -49,7 +49,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                                     onClick={() => setSelectedFile(file)}
                                     active={selectedFile && selectedFile.name === file.name}
                                 >
-                                    {file.name} - {file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
+                                    <p className="ttext-primary-emphasis">{file.name}</p> - {file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
                                 </ListGroup.Item>
                             ))}
                         </ListGroup>

@@ -35,14 +35,15 @@ def list_files(space):
         files = []
         for f in os.listdir(space_path):
             file_path = os.path.join(space_path, f)
-            if os.path.isfile(file_path):
-                images_folder = file_path.split(".")[0]
-                images_folder_path = images_folder
-                is_indexed = os.path.isdir(images_folder_path)
-                files.append({
-                    "name": f,
-                    "isIndexed": is_indexed
-                })
+            if "DS_Store" not in file_path:
+                if os.path.isfile(file_path):
+                    images_folder = file_path.split(".")[0]
+                    images_folder_path = images_folder
+                    is_indexed = os.path.isdir(images_folder_path)
+                    files.append({
+                        "name": f,
+                        "isIndexed": is_indexed
+                    })
         return jsonify({"files": files})
     return jsonify({"message": "Space not found"}), 404
 

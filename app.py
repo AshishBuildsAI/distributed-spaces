@@ -36,9 +36,13 @@ def list_files(space):
         for f in os.listdir(space_path):
             file_path = os.path.join(space_path, f)
             if os.path.isfile(file_path):
-                images_folder = f"{f}_images"
-                images_folder_path = os.path.join(space_path, images_folder)
-                is_indexed = os.path.exists(images_folder_path) and os.path.isdir(images_folder_path)
+                
+                images_folder = file_path.split(".")[0]
+                print("Image Folder : ", images_folder)
+                images_folder_path = images_folder
+                is_indexed = os.path.isdir(images_folder_path)
+                #is_indexed = os.path.exists(images_folder_path) and os.path.isdir(images_folder_path)
+                print(is_indexed,images_folder_path )
                 files.append({
                     "name": f,
                     "isIndexed": is_indexed

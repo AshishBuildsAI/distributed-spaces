@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
 import File from '../models/File';
- 
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);

@@ -41,15 +41,15 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                         <p className="badge bg-primary" >Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
-                        <ListGroup>
+                        <ListGroup className='list-group'>
                             {selectedSpace.files.map((file, index) => (
                                 <ListGroup.Item
-                                    className='list-group'
+                                    className='list-group-item list-group-item-action flex-column align-items-start'
                                     key={index}
                                     onClick={() => setSelectedFile(file)}
                                     active={selectedFile && selectedFile.name === file.name}
                                 >
-                                    <p className="ttext-primary-emphasis">{file.name}</p> - {file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
+                                    {file.name}{file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
                                 </ListGroup.Item>
                             ))}
                         </ListGroup>

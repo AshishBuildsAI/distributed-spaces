@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
-import File from '../models/File';
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);
@@ -35,21 +34,22 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
 
     return (
         <Card className="admin-panel">
-            <Card.Header>Files in {selectedSpace.name}</Card.Header>
+            <Card.Header>Files in {selectedSpace ? selectedSpace.name:""}</Card.Header>
             <Card.Body>
                 {selectedSpace ? (
                     <>
-                        <p class="badge bg-light">All Documents: {selectedSpace.files.length}</p>
-                        <p class="badge bg-success">Indexed: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
-                        <p class="badge bg-warning">Not Indexed: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
+                        <p className="badge bg-light" >Total Files: {selectedSpace.files.length}</p>
+                        <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
+                        <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
                         <ListGroup>
                             {selectedSpace.files.map((file, index) => (
                                 <ListGroup.Item
+                                    className='list-group'
                                     key={index}
                                     onClick={() => setSelectedFile(file)}
                                     active={selectedFile && selectedFile.name === file.name}
                                 >
-                                    {file.name} - {file.isIndexed ? <span class="badge bg-success">Indexed</span> : <span class="badge bg-warning">Not Indexed</span>}
+                                    {file.name} - {file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
                                 </ListGroup.Item>
                             ))}
                         </ListGroup>
@@ -60,10 +60,11 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                 {selectedFile && (
                     <>
                         {selectedFile.isIndexed ? (
-                            <p>{selectedFile.name} is already indexed.</p>
+                            
+                            <p className='alert alert-dismissible alert-success'>{selectedFile.name} is already indexed.</p>
                         ) : (
                             <>
-                                <Button className="mt-2" onClick={convertPdf} variant="primary" disabled={loading}>
+                                <Button className="mt-2 btn btn-warning" onClick={convertPdf} variant="primary" disabled={loading}>
                                     {loading ? (
                                         <>
                                             <Spinner

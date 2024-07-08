@@ -50,14 +50,16 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
     return (
         <div className="space-explorer">
             <h3>Spaces</h3>
-            <ListGroup>
+            <ListGroup className="list-group">
                 {spaces.map((space, index) => (
                     <ListGroup.Item 
+                        className="list-group-item list-group-item-primary d-flex justify-content-between align-items-center"
                         key={index} 
                         onClick={() => fetchFiles(space)}
                         active={selectedSpaceState && selectedSpaceState.name === space.name}
                     >
-                        {space.name} ({space.files.length} files)
+                        
+                        {space.name} <span className="badge bg-primary rounded-pill">{space.files.length}</span>
                     </ListGroup.Item>
                 ))}
             </ListGroup>

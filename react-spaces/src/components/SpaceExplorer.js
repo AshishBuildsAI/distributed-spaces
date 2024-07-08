@@ -1,40 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { ListGroup, Form, Button, ProgressBar, Card } from 'react-bootstrap';
+import { Form, Button, ProgressBar, ListGroup } from 'react-bootstrap';
 import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
-import 'bootswatch/dist/darkly/bootstrap.css'
-const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
+
+const SpaceExplorer = ({ setSelectedFile, setSelectedSpace, selectedFile }) => {
     const [spaces, setSpaces] = useState([]);
     const [file, setFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
     const [selectedSpaceState, setSelectedSpaceState] = useState(null);
 
-    useEffect(() => {
-        fetchSpaces();
+    const fetchSpaces = useCallback(async () => {
+        try {
+            const response = await axios.get('http://127.0.0.1:5000/list_spaces');
+            console.log('Spaces API response:', response.data); // Log the response
+
+            const spacesData = response.data.spaces;
+            if (Array.isArray(spacesData)) {
+                const spaceObjects = await Promise.all(
+                    spacesData.map(async (spaceName) => {
+                        const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
+                        console.log(`Files in ${spaceName}:`, filesResponse.data.files); // Log the files response
+                        return { name: spaceName, files: filesResponse.data.files };
+                    })
+                );
+                setSpaces(spaceObjects);
+                console.log('Space objects:', spaceObjects); // Log the space objects
+            } else {
+                console.error('Expected spaces to be an array');
+            }
+        } catch (error) {
+            console.error('Error fetching spaces:', error);
+        }
     }, []);
 
-    const fetchSpaces = async () => {
-        const response = await axios.get('http://127.0.0.1:5000/list_spaces');
-        const spacesWithCounts = await Promise.all(response.data.spaces.map(async (space) => {
-            const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${space}`);
-            return { name: space, fileCount: filesResponse.data.files.length };
-        }));
-        setSpaces(spacesWithCounts);
-    };
+    useEffect(() => {
+        fetchSpaces();
+    }, [fetchSpaces]);
 
-    const fetchFiles = (space) => {
-        setSelectedSpace(space.name); // Update the selected space in App component
-        setSelectedSpaceState(space.name); // Update local state
+    const fetchFiles = useCallback((space) => {
+        setSelectedSpace(space); // Update the selected space in App component
+        setSelectedSpaceState(space); // Update local state
         setSelectedFile(null); // Clear selected file when space is changed
-    };
+    }, [setSelectedSpace, setSelectedFile]);
 
     const uploadFile = async () => {
         if (file && selectedSpaceState) {
+            if (file.type !== 'application/pdf') {
+                alert('Only PDF files are allowed');
+                return;
+            }
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await axios.post(`http://127.0.0.1:5000/upload_file/${selectedSpaceState}`, formData, {
+                const response = await axios.post(`http://127.0.0.1:5000/upload_pdf`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
@@ -66,9 +85,9 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
                     <ListGroup.Item 
                         key={index} 
                         onClick={() => fetchFiles(space)}
-                        active={selectedSpaceState === space.name}
+                        active={selectedSpaceState && selectedSpaceState.name === space.name}
                     >
-                        {space.name} ({space.fileCount} files)
+                        {space.name} ({space.files.length} files)
                     </ListGroup.Item>
                 ))}
             </ListGroup>
@@ -78,6 +97,7 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace }) => {
                         <Form.Label>Upload File</Form.Label>
                         <Form.Control 
                             type="file" 
+                            accept="application/pdf"
                             onChange={(e) => setFile(e.target.files[0])}
                             ref={fileInputRef}
                         />

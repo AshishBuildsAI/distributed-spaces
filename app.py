@@ -1,6 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
+from pdf2image import convert_from_path
+from io import BytesIO
+from PIL import Image
+from werkzeug.utils import secure_filename
+from flask import Flask, jsonify, request
+import json, os, signal
+from InputDocument import InputDocument
 
 app = Flask(__name__)
 CORS(app)
@@ -56,6 +63,31 @@ def upload_file(space):
         return jsonify({"message": "Space not found"}), 404
     file.save(os.path.join(space_path, file.filename))
     return jsonify({"message": "File uploaded successfully"}), 200
+
+@app.route('/stopServer', methods=['GET'])
+def stopServer():
+    os.kill(os.getpid(), signal.SIGINT)
+    return jsonify({ "success": True, "message": "Server is shutting down..." })
+
+@app.route('/convert_pdf/<filename>', methods=['POST'])
+def convert_pdf(filename):
+   
+    space = request.json['space']
+    # print(space,filename )
+    if not space:
+        return jsonify({"error": "Space not provided"}), 400
+    space_path = os.path.join(ROOT_DIR, space)
+    filepath = os.path.join(space_path, filename)
+    # print(filepath)
+    pdf_doc = InputDocument(document_name=filename, file_path=filepath)
+    pdf_doc.pages
+    
+    if not os.path.exists(filepath):
+        return jsonify({"error": "File not found"}), 404
+    
+    # image_files.append((f"{filename}_page_{i+1}.jpg", image_file))
+
+    return jsonify({"message": f"PDF converted to images in space: {space}", "imageslocation": ""}), 200
 
 if __name__ == '__main__':
     if not os.path.exists(ROOT_DIR):

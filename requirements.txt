@@ -1,4 +1,6 @@
-flask==3.0.3
-dash==2.10.0
+flask
 dash-bootstrap-components==1.4.0
 werkzeug==3.0.0
+tools
+fitz
+frontend

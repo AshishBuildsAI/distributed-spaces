@@ -20,7 +20,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         setMessages([...messages, userMessage]);
 
         try {
-            const response = await axios.post('http://localhost:5000/chat', {
+            const response = await axios.post('http://127.0.0.1:5000/chat', {
                 space: selectedSpace,
                 query
             });

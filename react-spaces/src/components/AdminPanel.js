@@ -1,31 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Card, Button, ListGroup } from 'react-bootstrap';
+import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
+import File from '../models/File';
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
-    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
+
+    const fetchFiles = useCallback(async (spaceName) => {
+        try {
+            const response = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
+            const files = response.data.files;
+            if (Array.isArray(files)) {
+                selectedSpace.files = files.map(file => new File(file, spaceName));
+                setSelectedFile(null);
+            } else {
+                console.error('Expected files to be an array');
+            }
+        } catch (error) {
+            console.error('Error fetching files:', error);
+        }
+    }, [setSelectedFile, selectedSpace]);
 
     useEffect(() => {
         if (selectedSpace) {
-            fetchFiles(selectedSpace);
+            fetchFiles(selectedSpace.name);
         }
-    }, [selectedSpace]);
+    }, [selectedSpace, fetchFiles]);
 
-    const fetchFiles = async (space) => {
-        const response = await axios.get(`http://127.0.0.1:5000/list_files/${space}`);
-        setFiles(response.data.files);
-    };
-
-    const indexFile = async () => {
-        if (selectedFile) {
+    const convertPdf = async () => {
+        if (selectedFile && selectedSpace) {
+            setLoading(true);
+            setProgress(0);
             try {
-                const response = await axios.post('http://127.0.0.1:5000/index_file', { 
-                    space: selectedSpace, 
-                    filename: selectedFile 
-                });
+                const response = await axios.post(
+                    `http://127.0.0.1:5000/convert_pdf/${selectedFile.name}`,
+                    { space: selectedSpace.name },
+                    {
+                        onUploadProgress: (progressEvent) => {
+                            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                            setProgress(percentCompleted);
+                        }
+                    }
+                );
                 alert(response.data.message);
             } catch (error) {
-                alert('Error indexing file');
+                alert('Error converting PDF');
+            } finally {
+                setLoading(false);
+                fetchFiles(selectedSpace.name); // Refresh files to update indexed status
             }
         } else {
             alert('No file selected');
@@ -33,23 +56,54 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     };
 
     return (
-        <Card className="admin-panel card text-white bg-primary mb-3">
-            <Card.Header>Files in {selectedSpace}</Card.Header>
+        <Card className="admin-panel">
+            <Card.Header>Files in {selectedSpace.name}</Card.Header>
             <Card.Body>
-                <ListGroup class="list-group">
-                    {files.map((file, index) => (
-                        <ListGroup.Item 
-                            class="list-group-item list-group-item-primary d-flex justify-content-between align-items-center"
-                            key={index} 
-                            onClick={() => setSelectedFile(file)}
-                            active={selectedFile === file}
-                        >
-                            {file}
-                        </ListGroup.Item>
-                    ))}
-                </ListGroup>
+                {selectedSpace && (
+                    <>
+                        <p>Total Files: {selectedSpace.files.length}</p>
+                        <p>Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
+                        <p>Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
+                        <ListGroup>
+                            {selectedSpace.files.map((file, index) => (
+                                <ListGroup.Item
+                                    key={index}
+                                    onClick={() => setSelectedFile(file)}
+                                    active={selectedFile && selectedFile.name === file.name}
+                                >
+                                    {file.name} - {file.isIndexed ? 'Indexed' : 'Not Indexed'}
+                                </ListGroup.Item>
+                            ))}
+                        </ListGroup>
+                    </>
+                )}
                 {selectedFile && (
-                    <Button className="mt-2 btn btn-warning" onClick={indexFile}>Index this file</Button>
+                    <>
+                        {selectedFile.isIndexed ? (
+                            <p>{selectedFile.name} is already indexed.</p>
+                        ) : (
+                            <>
+                                <Button className="mt-2" onClick={convertPdf} variant="primary" disabled={loading}>
+                                    {loading ? (
+                                        <>
+                                            <Spinner
+                                                as="span"
+                                                animation="border"
+                                                size="sm"
+                                                role="status"
+                                                aria-hidden="true"
+                                            /> Converting...
+                                        </>
+                                    ) : (
+                                        'Index this file'
+                                    )}
+                                </Button>
+                                {loading && (
+                                    <ProgressBar now={progress} label={`${progress}%`} className="mt-3" />
+                                )}
+                            </>
+                        )}
+                    </>
                 )}
             </Card.Body>
         </Card>

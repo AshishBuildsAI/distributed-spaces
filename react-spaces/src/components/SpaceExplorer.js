@@ -1,48 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useRef } from 'react';
 import { Form, Button, ProgressBar, ListGroup } from 'react-bootstrap';
+import axios from 'axios';
 import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
 
-const SpaceExplorer = ({ setSelectedFile, setSelectedSpace, selectedFile }) => {
-    const [spaces, setSpaces] = useState([]);
+const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile }) => {
     const [file, setFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
     const [selectedSpaceState, setSelectedSpaceState] = useState(null);
 
-    const fetchSpaces = useCallback(async () => {
-        try {
-            const response = await axios.get('http://127.0.0.1:5000/list_spaces');
-            console.log('Spaces API response:', response.data); // Log the response
-
-            const spacesData = response.data.spaces;
-            if (Array.isArray(spacesData)) {
-                const spaceObjects = await Promise.all(
-                    spacesData.map(async (spaceName) => {
-                        const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
-                        console.log(`Files in ${spaceName}:`, filesResponse.data.files); // Log the files response
-                        return { name: spaceName, files: filesResponse.data.files };
-                    })
-                );
-                setSpaces(spaceObjects);
-                console.log('Space objects:', spaceObjects); // Log the space objects
-            } else {
-                console.error('Expected spaces to be an array');
-            }
-        } catch (error) {
-            console.error('Error fetching spaces:', error);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchSpaces();
-    }, [fetchSpaces]);
-
-    const fetchFiles = useCallback((space) => {
+    const fetchFiles = (space) => {
         setSelectedSpace(space); // Update the selected space in App component
         setSelectedSpaceState(space); // Update local state
         setSelectedFile(null); // Clear selected file when space is changed
-    }, [setSelectedSpace, setSelectedFile]);
+    };
 
     const uploadFile = async () => {
         if (file && selectedSpaceState) {
@@ -68,7 +39,6 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace, selectedFile }) => {
                 }
                 setFile(null); // Clear file state
                 setUploadProgress(0); // Reset upload progress
-                fetchSpaces(); // Refresh space list to update file counts
             } catch (error) {
                 alert('Error uploading file');
             }

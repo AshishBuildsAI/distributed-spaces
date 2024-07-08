@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
 import File from '../models/File';
@@ -6,27 +6,6 @@ import File from '../models/File';
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
-
-    const fetchFiles = useCallback(async (spaceName) => {
-        try {
-            const response = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
-            const files = response.data.files;
-            if (Array.isArray(files)) {
-                selectedSpace.files = files.map(file => new File(file.name, spaceName, file.isIndexed));
-                setSelectedFile(null);
-            } else {
-                console.error('Expected files to be an array');
-            }
-        } catch (error) {
-            console.error('Error fetching files:', error);
-        }
-    }, [setSelectedFile, selectedSpace]);
-
-    useEffect(() => {
-        if (selectedSpace) {
-            fetchFiles(selectedSpace.name);
-        }
-    }, [selectedSpace, fetchFiles]);
 
     const convertPdf = async () => {
         if (selectedFile && selectedSpace) {
@@ -48,7 +27,6 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                 alert('Error converting PDF');
             } finally {
                 setLoading(false);
-                fetchFiles(selectedSpace.name); // Refresh files to update indexed status
             }
         } else {
             alert('No file selected');
@@ -57,14 +35,13 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
 
     return (
         <Card className="admin-panel">
-            <Card.Header>Admin Panel</Card.Header>
+            <Card.Header>Files in {selectedSpace.name}</Card.Header>
             <Card.Body>
                 {selectedSpace ? (
                     <>
-                        <h3>Files in {selectedSpace.name}</h3>
-                        <p>Total Files: {selectedSpace.files.length}</p>
-                        <p>Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
-                        <p>Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
+                        <p class="badge bg-light">All Documents: {selectedSpace.files.length}</p>
+                        <p class="badge bg-success">Indexed: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
+                        <p class="badge bg-warning">Not Indexed: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
                         <ListGroup>
                             {selectedSpace.files.map((file, index) => (
                                 <ListGroup.Item
@@ -83,11 +60,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                 {selectedFile && (
                     <>
                         {selectedFile.isIndexed ? (
-                             
-                            <div class="alert alert-dismissible alert-success">
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            <strong>{selectedFile.name}</strong> is already indexed. <a href="#" class="alert-link">is already indexed</a>.
-                            </div>
+                            <p>{selectedFile.name} is already indexed.</p>
                         ) : (
                             <>
                                 <Button className="mt-2" onClick={convertPdf} variant="primary" disabled={loading}>

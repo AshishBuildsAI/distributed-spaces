@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
 import File from '../models/File';
+ 
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);
@@ -12,7 +13,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
             const response = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
             const files = response.data.files;
             if (Array.isArray(files)) {
-                selectedSpace.files = files.map(file => new File(file, spaceName));
+                selectedSpace.files = files.map(file => new File(file.name, spaceName, file.isIndexed));
                 setSelectedFile(null);
             } else {
                 console.error('Expected files to be an array');
@@ -57,10 +58,11 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
 
     return (
         <Card className="admin-panel">
-            <Card.Header>Files in {selectedSpace.name}</Card.Header>
+            <Card.Header>Admin Panel</Card.Header>
             <Card.Body>
-                {selectedSpace && (
+                {selectedSpace ? (
                     <>
+                        <h3>Files in {selectedSpace.name}</h3>
                         <p>Total Files: {selectedSpace.files.length}</p>
                         <p>Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p>Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
@@ -76,6 +78,8 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                             ))}
                         </ListGroup>
                     </>
+                ) : (
+                    <p>Please select a space to view files.</p>
                 )}
                 {selectedFile && (
                     <>

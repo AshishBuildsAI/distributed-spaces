@@ -32,7 +32,17 @@ def list_spaces():
 def list_files(space):
     space_path = os.path.join(ROOT_DIR, space)
     if os.path.exists(space_path):
-        files = [f for f in os.listdir(space_path) if os.path.isfile(os.path.join(space_path, f))]
+        files = []
+        for f in os.listdir(space_path):
+            file_path = os.path.join(space_path, f)
+            if os.path.isfile(file_path):
+                images_folder = f"{f}_images"
+                images_folder_path = os.path.join(space_path, images_folder)
+                is_indexed = os.path.exists(images_folder_path) and os.path.isdir(images_folder_path)
+                files.append({
+                    "name": f,
+                    "isIndexed": is_indexed
+                })
         return jsonify({"files": files})
     return jsonify({"message": "Space not found"}), 404
 

@@ -53,7 +53,7 @@ const SpaceExplorer = ({ setSelectedFile, setSelectedSpace, selectedFile }) => {
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await axios.post(`http://127.0.0.1:5000/upload_pdf`, formData, {
+                const response = await axios.post(`http://127.0.0.1:5000/upload_file/${selectedSpaceState.name}`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },

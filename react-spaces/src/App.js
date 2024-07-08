@@ -7,7 +7,7 @@ import SpaceExplorer from './components/SpaceExplorer';
 import ChatBot from './components/ChatBot';
 import AdminPanel from './components/AdminPanel';
 import Footer from './components/Footer';
-import { Container, Grid, AppBar, Toolbar, Typography } from '@mui/material';
+import { Container, Row, Col, Navbar } from 'react-bootstrap';
 import './App.css'; // Import custom CSS for additional styling
 
 function App() {
@@ -16,35 +16,35 @@ function App() {
 
     return (
         <div className="d-flex flex-column min-vh-100">
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h6">My App</Typography>
-                </Toolbar>
-            </AppBar>
-            <Container className="app-container flex-grow-1">
+            <Navbar bg="primary" variant="dark">
+                <Container>
+                    <Navbar.Brand href="#">My App</Navbar.Brand>
+                </Container>
+            </Navbar>
+            <Container className="app-container flex-grow-1 mt-4">
                 <CreateSpace />
-                <Grid container spacing={3}>
-                    <Grid item md={3} className="sidebar">
+                <Row>
+                    <Col md={3} className="sidebar">
                         <SpaceExplorer 
                             setSelectedFile={setSelectedFile} 
                             setSelectedSpace={setSelectedSpace} 
                             selectedFile={selectedFile}
                         />
-                    </Grid>
-                    <Grid item md={6} className="chat-panel">
+                    </Col>
+                    <Col md={6} className="chat-panel">
                         <ChatBot 
                             selectedSpace={selectedSpace} 
                             selectedFile={selectedFile} 
                         />
-                    </Grid>
-                    <Grid item md={3} className="admin-panel">
+                    </Col>
+                    <Col md={3} className="admin-panel">
                         <AdminPanel 
                             selectedSpace={selectedSpace} 
                             selectedFile={selectedFile} 
                             setSelectedFile={setSelectedFile} 
                         />
-                    </Grid>
-                </Grid>
+                    </Col>
+                </Row>
             </Container>
             <Footer />
         </div>

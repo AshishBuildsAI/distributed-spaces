@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootswatch/dist/darkly/bootstrap.min.css'; // You can choose a different theme if you like
+import 'bootswatch/dist/cerulean/bootstrap.min.css'; // You can choose a different theme if you like
 
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -18,18 +18,21 @@ function App() {
 
     const fetchSpaces = useCallback(async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/list_spaces');
+            const response = await axios.get('http://localhost:5000/list_spaces');
             const spacesData = response.data.spaces;
             if (Array.isArray(spacesData)) {
                 const spaceObjects = await Promise.all(
                     spacesData.map(async (spaceName) => {
-                        const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
+                        const filesResponse = await axios.get(`http://localhost:5000/list_files/${spaceName}`);
                         return { name: spaceName, files: filesResponse.data.files };
                     })
                 );
                 setSpaces(spaceObjects);
-                
-                selectedSpace = spaceObjects[0]
+
+                // Set the first space as the default selected space
+                if (spaceObjects.length > 0) {
+                    setSelectedSpace(spaceObjects[0]);
+                }
             } else {
                 console.error('Expected spaces to be an array');
             }
@@ -58,6 +61,7 @@ function App() {
                             setSelectedFile={setSelectedFile} 
                             setSelectedSpace={setSelectedSpace} 
                             selectedFile={selectedFile}
+                            selectedSpace={selectedSpace} // Pass the selectedSpace prop
                         />
                     </Col>
                     <Col md={6} className="chat-panel">

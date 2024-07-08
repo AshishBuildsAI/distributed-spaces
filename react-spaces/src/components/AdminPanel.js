@@ -72,7 +72,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                                     onClick={() => setSelectedFile(file)}
                                     active={selectedFile && selectedFile.name === file.name}
                                 >
-                                    {file.name} - {file.isIndexed ? 'Indexed' : 'Not Indexed'}
+                                    {file.name} - {file.isIndexed ? <span class="badge bg-success">Indexed</span> : <span class="badge bg-warning">Not Indexed</span>}
                                 </ListGroup.Item>
                             ))}
                         </ListGroup>
@@ -83,7 +83,11 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                 {selectedFile && (
                     <>
                         {selectedFile.isIndexed ? (
-                            <p>{selectedFile.name} is already indexed.</p>
+                             
+                            <div class="alert alert-dismissible alert-success">
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            <strong>{selectedFile.name}</strong> is already indexed. <a href="#" class="alert-link">is already indexed</a>.
+                            </div>
                         ) : (
                             <>
                                 <Button className="mt-2" onClick={convertPdf} variant="primary" disabled={loading}>

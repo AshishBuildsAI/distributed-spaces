@@ -38,7 +38,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
             <Card.Body>
                 {selectedSpace ? (
                     <>
-                        <p className="badge bg-primary" >Total Files: {selectedSpace.files.length}</p>
+                        <p data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Tooltip on right" className="badge bg-primary" >Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
                         <ListGroup className='list-group'>

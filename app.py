@@ -8,11 +8,22 @@ from werkzeug.utils import secure_filename
 from flask import Flask, jsonify, request
 import json, os, signal
 from InputDocument import InputDocument
+import requests
+from dotenv import load_dotenv 
+load_dotenv()
+import pathlib
+import textwrap
+import google.generativeai as genai 
+import tqdm as notebook_tqdm
 
+GOOGLE_API_KEY = os.environ["GEMINI_API_KEY"]
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-flash')
 app = Flask(__name__)
 CORS(app)
 
 ROOT_DIR = 'spaces'
+
 
 @app.route('/create_space', methods=['POST'])
 def create_space():
@@ -56,11 +67,32 @@ def index_file():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    space = request.json['space']
-    query = request.json['query']
-    # Implement chatbot logic here
-    response = f"Query '{query}' in space '{space}' is processed"
-    return jsonify({"response": response})
+    
+    data = request.json
+    space = data.get('space')
+    filename = data.get('filename')
+    query = data.get('query')
+    #text_model = GenerativeModel("gemini-1.5-pro")
+    if not space or not filename or not query:
+        return jsonify({"error": "Space, filename, and query are required"}), 400
+    
+    headers = {
+        'Authorization': f'Bearer {GOOGLE_API_KEY}',
+        'Content-Type': 'application/json'
+    }
+    payload = {
+        'space': space,
+        'filename': filename,
+        'query': query
+    }
+    
+    try:
+        print(query)
+        response = model.generate_content(query)
+        print(response.text)
+        return jsonify(response.text)
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/upload_file/<space>', methods=['POST'])
 def upload_file(space):

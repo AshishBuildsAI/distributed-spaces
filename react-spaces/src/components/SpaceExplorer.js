@@ -59,7 +59,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                         active={selectedSpaceState && selectedSpaceState.name === space.name}
                     >
                         
-                        {space.name} <span className="badge bg-primary rounded-pill">{space.files.length}</span>
+                        {space.name} <span className="badge bg-warning rounded-pill">{space.files.filter(file => !file.isIndexed).length}</span> <span className="badge bg-success rounded-pill">{space.files.filter(file => file.isIndexed).length}</span> <span className="badge bg-primary rounded-pill">{space.files.length}</span>
                     </ListGroup.Item>
                 ))}
             </ListGroup>

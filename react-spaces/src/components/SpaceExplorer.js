@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Form, Button, ProgressBar, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
 import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
@@ -8,6 +8,14 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
     const [selectedSpaceState, setSelectedSpaceState] = useState(null);
+
+    useEffect(() => {
+        if (spaces.length > 0) {
+            const firstSpace = spaces[0];
+            setSelectedSpace(firstSpace);
+            setSelectedSpaceState(firstSpace);
+        }
+    }, [spaces]);
 
     const fetchFiles = (space) => {
         setSelectedSpace(space); // Update the selected space in App component
@@ -58,8 +66,10 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                         onClick={() => fetchFiles(space)}
                         active={selectedSpaceState && selectedSpaceState.name === space.name}
                     >
-                        
-                        {space.name} <span className="badge bg-warning rounded-pill">{space.files.filter(file => !file.isIndexed).length}</span> <span className="badge bg-success rounded-pill">{space.files.filter(file => file.isIndexed).length}</span> <span className="badge bg-primary rounded-pill">{space.files.length}</span>
+                        {space.name} 
+                        <span className="badge bg-warning rounded-pill">{space.files.filter(file => !file.isIndexed).length}</span> 
+                        <span className="badge bg-success rounded-pill">{space.files.filter(file => file.isIndexed).length}</span> 
+                        <span className="badge bg-primary rounded-pill">{space.files.length}</span>
                     </ListGroup.Item>
                 ))}
             </ListGroup>

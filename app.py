@@ -13,9 +13,13 @@ from dotenv import load_dotenv
 load_dotenv()
 import pathlib
 import textwrap
+import psycopg2
+from datetime import datetime
+from paddleocr import PaddleOCR
+import datetime
 import google.generativeai as genai 
 import tqdm as notebook_tqdm
-
+ocr = PaddleOCR(use_angle_cls=True, lang='en')
 GOOGLE_API_KEY = os.environ["GEMINI_API_KEY"]
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
@@ -23,7 +27,8 @@ app = Flask(__name__)
 CORS(app)
 
 ROOT_DIR = 'spaces'
-
+# In-memory storage for conversations
+conversations = []
 
 @app.route('/create_space', methods=['POST'])
 def create_space():
@@ -133,6 +138,66 @@ def convert_pdf(filename):
     # image_files.append((f"{filename}_page_{i+1}.jpg", image_file))
 
     return jsonify({"message": f"PDF converted to images in space: {space}", "imageslocation": ""}), 200
+@app.route('/save_conversation', methods=['POST'])
+def save_conversation():
+    data = request.get_json()
+    user_message = data['userMessage']
+    bot_message = data['botMessage']
+    
+    # Get current date as a string
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    
+    # Initialize a list for today's conversations if it doesn't exist
+    if date_str not in conversations:
+        conversations[date_str] = []
+    
+    # Append the conversation to today's list without duplicates
+    if user_message not in conversations[date_str]:
+        conversations[date_str].append(user_message)
+    if bot_message not in conversations[date_str]:
+        conversations[date_str].append(bot_message)
+    
+    return jsonify({"status": "success"})
+
+@app.route('/save_all_conversations', methods=['POST'])
+def save_all_conversations():
+    """
+    Save all conversations so far without duplicates.
+    """
+    all_conversations = []
+    seen_messages = set()
+    
+    for date, msgs in conversations.items():
+        for msg in msgs:
+            msg_tuple = (msg['sender'], msg['text'], msg['timestamp'])
+            if msg_tuple not in seen_messages:
+                seen_messages.add(msg_tuple)
+                all_conversations.append(msg)
+    
+    # Here, save 'all_conversations' to persistent storage or perform any action needed
+    # Example: saving to a file
+    with open('all_conversations.json', 'w') as f:
+        json.dump(all_conversations, f)
+    
+    return jsonify({"status": "all conversations saved", "total_conversations": len(all_conversations)})
+
+@app.route('/get_conversations/<date>', methods=['GET'])
+def get_conversations(date):
+    """
+    Retrieve conversations for a specific date.
+    Date format should be YYYY-MM-DD (e.g., 2024-07-10).
+    """
+    try:
+        # Validate date format
+        datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Please use YYYY-MM-DD."}), 400
+
+    # Return conversations for the given date
+    if date in conversations:
+        return jsonify(conversations[date])
+    else:
+        return jsonify([])
 
 if __name__ == '__main__':
     if not os.path.exists(ROOT_DIR):

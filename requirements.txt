@@ -4,3 +4,6 @@ werkzeug==3.0.0
 tools
 fitz
 frontend
+psycopg2    
+paddlepaddle
+paddleocr

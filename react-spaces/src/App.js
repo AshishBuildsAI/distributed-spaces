@@ -55,11 +55,7 @@ function App() {
 
     return (
         <div className="d-flex flex-column min-vh-100">
-            <Navbar bg="primary" variant="dark">
-                <Container>
-                    <Navbar.Brand href="#">My App</Navbar.Brand>
-                </Container>
-            </Navbar>
+            
             <Container className="app-container flex-grow-1 mt-4">
                 <CreateSpace fetchSpaces={fetchSpaces} />
                 <Row>

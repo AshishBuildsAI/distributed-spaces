@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Card, ListGroup, Form, Button, InputGroup, Image } from 'react-bootstrap';
+import { Card, ListGroup, Form, Button, InputGroup, Image, Spinner } from 'react-bootstrap';
+import ReactMarkdown from 'react-markdown';
 
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
@@ -39,13 +40,14 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                     }
                 }
             );
-            console.log('API response:', response.data); // Debug log
-            const botMessage = { sender: 'bot', text: response.text };
-            setMessages(prevMessages => [...prevMessages, userMessage, botMessage]);
+            // alert(response.data);
+            console.log('API response:', response); // Debug log
+            const botMessage = { sender: 'bot', text: response.data };
+            setMessages(prevMessages => [...prevMessages, botMessage]);
         } catch (error) {
             console.error('Error sending message:', error);
             const errorMessage = { sender: 'bot', text: 'Error processing your request.' };
-            setMessages(prevMessages => [...prevMessages, userMessage, errorMessage]);
+            setMessages(prevMessages => [...prevMessages, errorMessage]);
         } finally {
             setInput('');
             setIsSending(false);
@@ -60,22 +62,30 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
 
     return (
         <Card className="chat-panel">
-            <Card.Header>ChatBot</Card.Header>
-            <Card.Body>
-                <ListGroup className="chat-list" ref={chatListRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <Card.Header>
+                ChatBot - {selectedSpace ? selectedSpace.name : 'No Space Selected'} / {selectedFile ? selectedFile.name : 'No File Selected'}
+            </Card.Header>
+            <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
+                <ListGroup className="chat-list flex-grow-1" ref={chatListRef} style={{ overflowY: 'auto' }}>
                     {messages.map((message, index) => (
                         <ListGroup.Item
                             key={index}
                             className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
                         >
                             {message.sender === 'bot' && (
-                                <Image src="bot-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
+                                <Image src="/path/to/bot-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
                             )}
                             <div>
-                                <strong>{message.sender === 'user' ? 'You' : 'Bot'}:</strong> {message.text}
+                                <strong>{message.sender === 'user' ? 'You' : 'Bot'}:</strong> <span style={{ whiteSpace: 'pre-wrap' }}>
+                                {message.sender === 'bot' ? (
+                                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                                ) : (
+                                    message.text
+                                )}
+                            </span>
                             </div>
                             {message.sender === 'user' && (
-                                <Image src="user-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
+                                <Image src="/path/to/user-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
                             )}
                         </ListGroup.Item>
                     ))}
@@ -90,6 +100,9 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                         disabled={isSending}
                     />
                     <Button variant="primary" onClick={sendMessage} disabled={isSending}>Send</Button>
+                    {isSending && <Spinner animation="border" role="status" className="ml-2">
+                        <span className="sr-only">Loading...</span>
+                    </Spinner>}
                 </InputGroup>
             </Card.Body>
         </Card>

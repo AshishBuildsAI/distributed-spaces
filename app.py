@@ -87,9 +87,11 @@ def chat():
     }
     
     try:
-        print(query)
+       
         response = model.generate_content(query)
-        print(response.text)
+        #print(response.text)
+        print("User : ", query)
+        print("Bot : ", response.text)
         return jsonify(response.text)
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500

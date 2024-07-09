@@ -73,19 +73,19 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                             className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
                         >
                             {message.sender === 'bot' && (
-                                <Image src="/path/to/bot-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
+                                <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
                             )}
                             <div>
-                                <strong>{message.sender === 'user' ? 'You' : 'Bot'}:</strong> <span style={{ whiteSpace: 'pre-wrap' }}>
+                             <span style={{ whiteSpace: 'pre-wrap' }}>
                                 {message.sender === 'bot' ? (
                                     <ReactMarkdown>{message.text}</ReactMarkdown>
                                 ) : (
-                                    message.text
+                                    <p class="text-success">{message.text}</p>
                                 )}
                             </span>
                             </div>
                             {message.sender === 'user' && (
-                                <Image src="/path/to/user-avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
+                                <Image src="./user_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
                             )}
                         </ListGroup.Item>
                     ))}

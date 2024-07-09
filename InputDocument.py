@@ -7,7 +7,7 @@ class InputDocument:
         self.pages = []
         space_path = Path(file_path).parent.absolute()
         self.file_path = file_path
-        self.imagesfolder = os.path.join(space_path,self.document_name.split(".")[0] ) 
+        self.imagesfolder = os.path.join(space_path,self.document_name[0:self.document_name.rindex(".")] ) 
         if save_images_to_disk:
             if not os.path.exists(self.imagesfolder):
                 if not os.path.exists(self.imagesfolder):

@@ -4,3 +4,6 @@ spaces
 lib.py
 main.py
 __pycache__/
+node_modules
+models
+package-list.txt

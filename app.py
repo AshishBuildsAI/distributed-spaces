@@ -194,7 +194,7 @@ def chat():
         res = get_top1_similar_docs(embed, conn=conn,schema=dbschema, table=dbtable)
         envelope=f"You are an AI assitant, capable of replying with precise information only from the documetn or documents,if dont know the answer, dont answer from anywhere only use the context {res} to answer the question {question}, add smiley in the end"
         response = language_model.generate_content(envelope)
-        #print("Bot : ", response.text)
+        print("Bot : ", res, response.text)
         return jsonify(response.text)
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
@@ -251,7 +251,7 @@ def convert_pdf(filename):
             embeddings.append(embedding)
     
     table_name = f"{space}_{filename.split('.')[0]}"
-    create_table('public', table_name)
+    #create_table('public', table_name)
     
     for i, embedding in enumerate(embeddings):
         cur.execute(f"""

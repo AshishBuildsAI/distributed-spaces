@@ -85,7 +85,7 @@ def get_embeddings(content):
     # Generate embeddings using the local model
     embeddings = embedding_model.encode(content, convert_to_tensor=True)
     return embeddings.tolist()
-
+create_table(schema=dbschema, table_name=dbtable)
 logging.basicConfig(level=logging.DEBUG)
 
 def get_top1_similar_docs(query_embedding, conn, schema, table):
@@ -234,7 +234,8 @@ def convert_pdf(filename):
     pdf_doc = InputDocument(document_name=filename, file_path=filepath)
     #pdf_doc.pages
     images_folder = pdf_doc.imagesfolder  # Get the folder where images are saved
-    create_table(schema=dbschema, table_name=dbtable)
+    
+    #create_table(schema=dbschema, table_name=dbtable)
     embeddings = []
     # Iterate over all PNG files in the images folder
     for image_file in os.listdir(images_folder):
@@ -250,7 +251,7 @@ def convert_pdf(filename):
             save_ocr_result(source=filename, pageno=pageno, imagesource=image_path, ocrtext=ocr_text, embedding=embedding, cost=cost, metadata=metadata)
             embeddings.append(embedding)
     
-    table_name = f"{space}_{filename.split('.')[0]}"
+    #table_name = f"{space}_{filename.split('.')[0]}"
     #create_table('public', table_name)
     
     for i, embedding in enumerate(embeddings):

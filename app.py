@@ -192,7 +192,7 @@ def chat():
     try:
         embed = get_embeddings(question)
         res = get_top1_similar_docs(embed, conn=conn,schema=dbschema, table=dbtable)
-        envelope=f"You are an AI assitant, capable of replying with precise information only from the documetn or documents,if dont know the answer, dont answer from anywhere only use the context {res} to answer the question {question}, add smiley in the end"
+        envelope=f"You are a friendly AI assitant who finds information for HR assistants, Engineers, sales teams and many more ... only using the given context {res} answer the question {question}"
         response = language_model.generate_content(envelope)
         print("Bot : ", res, response.text)
         return jsonify(response.text)

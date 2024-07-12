@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './AdminPanel.css'; // Ensure this file exists and is correctly imported
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);
@@ -43,18 +44,20 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                         <p data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Tooltip on right" className="badge bg-primary">Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
-                        <ListGroup className='list-group'>
-                            {selectedSpace.files.map((file, index) => (
-                                <ListGroup.Item
-                                    className='list-group-item list-group-item-action flex-column align-items-start'
-                                    key={index}
-                                    onClick={() => setSelectedFile(file)}
-                                    active={selectedFile && selectedFile.name === file.name}
-                                >
-                                    {file.name}{file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
-                                </ListGroup.Item>
-                            ))}
-                        </ListGroup>
+                        <div className='file-list-container'>
+                            <ListGroup className='list-group'>
+                                {selectedSpace.files.map((file, index) => (
+                                    <ListGroup.Item
+                                        className='list-group-item list-group-item-action flex-column align-items-start'
+                                        key={index}
+                                        onClick={() => setSelectedFile(file)}
+                                        active={selectedFile && selectedFile.name === file.name}
+                                    >
+                                        {file.name}{file.isIndexed ? <span className="badge rounded-pill bg-success">Indexed</span> : <span className="badge rounded-pill bg-warning">Not Indexed</span>}
+                                    </ListGroup.Item>
+                                ))}
+                            </ListGroup>
+                        </div>
                     </>
                 ) : (
                     <p>Please select a space to view files.</p>

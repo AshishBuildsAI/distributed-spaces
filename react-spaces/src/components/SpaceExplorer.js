@@ -99,7 +99,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
             {selectedSpaceState && (
                 <Form className="upload-form mt-3">
                     <Form.Group controlId="formFile" className="mb-3">
-                        <Form.Label>Upload File</Form.Label>
+                        {/* <Form.Label>Upload File</Form.Label> */}
                         <Form.Control 
                             type="file" 
                             accept="application/pdf"

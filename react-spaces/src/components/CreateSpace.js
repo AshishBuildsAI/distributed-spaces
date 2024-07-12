@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Form, Button, InputGroup } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const CreateSpace = () => {
     const [spaceName, setSpaceName] = useState('');
@@ -8,24 +10,34 @@ const CreateSpace = () => {
     const createSpace = async () => {
         try {
             const response = await axios.post('http://127.0.0.1:5000/create_space', { spaceName });
-            alert(response.data.message);
+            toast.success(response.data.message);
         } catch (error) {
-            alert('Error creating space');
+            toast.error('Error creating space', {position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                });
         }
     };
 
     return (
-        <Form className="create-space-form">
-            <InputGroup>
-                <Form.Control 
-                    type="text" 
-                    placeholder="Enter space name" 
-                    value={spaceName} 
-                    onChange={(e) => setSpaceName(e.target.value)} 
-                />
-                <Button variant="primary" onClick={createSpace}>Create Space</Button>
-            </InputGroup>
-        </Form>
+        <div>
+            <Form className="create-space-form">
+                <InputGroup>
+                    <Form.Control 
+                        type="text" 
+                        placeholder="Enter space name" 
+                        value={spaceName} 
+                        onChange={(e) => setSpaceName(e.target.value)} 
+                    />
+                    <Button variant="primary" onClick={createSpace}>Create Space</Button>
+                </InputGroup>
+            </Form>
+            <ToastContainer />
+        </div>
     );
 };
 

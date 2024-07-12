@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Form, Button, ProgressBar, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
 
 const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile }) => {
@@ -26,7 +28,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
     const uploadFile = async () => {
         if (file && selectedSpaceState) {
             if (file.type !== 'application/pdf') {
-                alert('Only PDF files are allowed');
+                toast.warn('Only PDF files are allowed');
                 return;
             }
             const formData = new FormData();
@@ -41,17 +43,38 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                         setUploadProgress(percentCompleted);
                     },
                 });
-                alert(response.data.message);
+                toast.success(response.data.message, {position: "top-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    });
                 if (fileInputRef.current) {
                     fileInputRef.current.value = ''; // Clear file input
                 }
                 setFile(null); // Clear file state
                 setUploadProgress(0); // Reset upload progress
             } catch (error) {
-                alert('Error uploading file');
+                toast.error('Error uploading file',{position: "top-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    });
             }
         } else {
-            alert('Please select a space and a file');
+            toast.error('Please select a space and a file',{position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                });
         }
     };
 
@@ -90,6 +113,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                     )}
                 </Form>
             )}
+            <ToastContainer />
         </div>
     );
 };

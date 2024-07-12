@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Card, Button, ListGroup, Spinner, ProgressBar } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
     const [loading, setLoading] = useState(false);
@@ -21,27 +23,27 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                         }
                     }
                 );
-                alert(response.data.message);
+                toast.success(response.data.message);
             } catch (error) {
-                alert('Error converting PDF');
+                toast.error('Error converting PDF');
             } finally {
                 setLoading(false);
             }
         } else {
-            alert('No file selected');
+            toast.warn('No file selected');
         }
     };
 
     return (
         <Card className="admin-panel">
-            <Card.Header>Files in {selectedSpace ? selectedSpace.name:""}</Card.Header>
+            <Card.Header>Files in {selectedSpace ? selectedSpace.name : ""}</Card.Header>
             <Card.Body>
                 {selectedSpace ? (
                     <>
-                        <p data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Tooltip on right" className="badge bg-primary" >Total Files: {selectedSpace.files.length}</p>
+                        <p data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Tooltip on right" className="badge bg-primary">Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
-                        <ListGroup className='list-group' >
+                        <ListGroup className='list-group'>
                             {selectedSpace.files.map((file, index) => (
                                 <ListGroup.Item
                                     className='list-group-item list-group-item-action flex-column align-items-start'
@@ -60,7 +62,6 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                 {selectedFile && (
                     <>
                         {selectedFile.isIndexed ? (
-                            
                             <p className='alert alert-dismissible alert-success'>{selectedFile.name} is already indexed.</p>
                         ) : (
                             <>
@@ -87,6 +88,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                     </>
                 )}
             </Card.Body>
+            <ToastContainer />
         </Card>
     );
 };

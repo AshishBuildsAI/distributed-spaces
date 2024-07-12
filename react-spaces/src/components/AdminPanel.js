@@ -41,7 +41,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                         <p data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Tooltip on right" className="badge bg-primary" >Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
-                        <ListGroup className='list-group' style={{ display: 'flex', flexDirection: 'column', height: '85vh' }}>
+                        <ListGroup className='list-group' >
                             {selectedSpace.files.map((file, index) => (
                                 <ListGroup.Item
                                     className='list-group-item list-group-item-action flex-column align-items-start'

@@ -88,53 +88,73 @@ def get_embeddings(content):
 create_table(schema=dbschema, table_name=dbtable)
 logging.basicConfig(level=logging.DEBUG)
 
-def get_top1_similar_docs(query_embedding, conn, schema, table):
-    # Normalize the query embedding
-    query_embedding = np.array(query_embedding)
-    query_embedding = query_embedding / np.linalg.norm(query_embedding)
-    
-    cur = conn.cursor()
-    # Use normalized embeddings and add additional filters for relevance
-    cur.execute(f"""
-        SELECT pageno, context, tabletext, source, imagepath, embedding, COALESCE(numtokens, 0)
-        FROM {schema}.{table}
-    """)
-    
-    rows = cur.fetchall()
-    
-    # Compute similarities and store results
-    results = []
-    for row in rows:
-        pageno, context, tabletext, source, imagepath, embedding_str, numtokens = row
-        try:
-            embedding = np.array(json.loads(embedding_str))  # Convert JSON string to numpy array
-            
-            # Safe normalization
-            norm = np.linalg.norm(embedding)
-            if norm == 0:
-                logging.warning(f"Skipping normalization for zero vector: {embedding}")
-                continue
-            
-            embedding = embedding / norm
-            similarity = np.dot(query_embedding, embedding)
-            
-            # Ensure numtokens is a valid number
-            numtokens = numtokens if numtokens is not None else 0
-            
-            # Optionally, weight similarity by the number of tokens or other criteria
-            weighted_similarity = similarity * (1 + 0.01 * numtokens)
-            
-            results.append((pageno, context, tabletext, source, imagepath, weighted_similarity))
-        except Exception as e:
-            logging.error(f"Error processing row {row}: {e}")
-    
-    # Sort results by weighted similarity
-    results.sort(key=lambda x: x[-1], reverse=True)
-    
-    # Return the top 3 most similar documents
-    top3_docs = results[:5]
-    return top3_docs
+def get_top(query_embedding, conn, schema, table, space, filename=None,numrows=5):
+    try:
+        print(filename)
+        if filename:
+            cur.execute(f"""
+                SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
+                FROM {schema}.{table} where metadata->>'space' = %s
+                and source = %s
+            """, (space, filename))
+        else:
+            cur.execute(f"""
+                SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
+                FROM {schema}.{table} where metadata->>'space' = %s
+            """, (space))
+        rows = cur.fetchall()
+        #print("Printing row 1", rows[0])
+        # Compute similarities and store results
+        results = []
+        wrong_embeddings = []
+        for row in rows:
+            pageno, context, metadata, source, imagepath, embedding_str, numtokens = row
+            try:
+                if isinstance(embedding_str, str):
+                    embedding = json.loads(embedding_str)
+                elif isinstance(embedding_str, (bytes, bytearray)):
+                        embedding = json.loads(embedding_str.decode('utf-8'))
+                elif isinstance(embedding_str, list):
+                        embedding = np.array(embedding_str)
+                else :
+                     #print("Possibly array already")
+                     embedding = embedding_str
 
+                # Safe normalization
+                norm = np.linalg.norm(embedding)
+                #print(norm)
+                if norm == 0:
+                    logging.warning(f"Skipping normalization for zero vector: {embedding}")
+                    continue
+                
+                embedding = embedding / norm
+                similarity = np.dot(query_embedding, embedding)
+                
+                # Ensure numtokens is a valid number
+                numtokens = numtokens if numtokens is not None else 0
+                
+                # Optionally, weight similarity by the number of tokens or other criteria
+                weighted_similarity = similarity * (1 + 0.01 * numtokens)
+                
+                results.append((pageno, context, metadata, source, imagepath, weighted_similarity))
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON decode error for row: {e}")
+            except Exception as e:
+                #print(type(embedding_str))
+                logging.error(f"Error processing row : {e}")
+         # Sort results by weighted similarity
+
+        results.sort(key=lambda x: x[-1], reverse=True)
+        
+        # Return the top 3 most similar documents
+        top_docs = results[:numrows]
+        conn.commit()
+        return top_docs
+    except Exception as e:
+        print(e)
+        rows = ""
+    conn.commit()
+    return rows
 
 # Function to save OCR results to PostgreSQL
 def save_ocr_result(source, pageno, imagesource, ocrtext, embedding, cost, metadata):
@@ -178,7 +198,6 @@ def list_files(space):
         return jsonify({"files": files})
     return jsonify({"message": "Space not found"}), 404
 
-
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
@@ -186,18 +205,24 @@ def chat():
     filename = data.get('filename')
     question = data.get('query')
     
-    if not space or not filename or not question:
-        return jsonify({"error": "Space, filename, and query are required"}), 400
+    if not space or not question:
+        return jsonify({"error": "Space and query are required"}), 400
     
     try:
         embed = get_embeddings(question)
-        res = get_top1_similar_docs(embed, conn=conn,schema=dbschema, table=dbtable)
-        envelope=f"You are a friendly AI assitant who finds information for HR assistants, Engineers, sales teams and many more ... only using the given context {res} answer the question {question}"
+        
+        if filename:
+            res = get_top(embed, conn=conn, schema=dbschema, table=dbtable, space=space, filename=filename, numrows=10)
+        else:
+            res = get_top(embed, conn=conn, schema=dbschema, table=dbtable, space=space, numrows=10)
+        
+        envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more ... only using the given context {res} answer the question {question}"
         response = language_model.generate_content(envelope)
         print("Bot : ", res, response.text)
         return jsonify(response.text)
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/upload_file/<space>', methods=['POST'])
 def upload_file(space):
@@ -256,7 +281,7 @@ def convert_pdf(filename):
     
     for i, embedding in enumerate(embeddings):
         cur.execute(f"""
-            INSERT INTO public.{table_name} (pageno, context, embedding, numtokens, cost, source, imagepath)
+            INSERT INTO {dbschema}.{dbtable} (pageno, context, embedding, numtokens, cost, source, imagepath)
             VALUES (%s, %s, %s, %s, %s, %s, %s);
         """, (i+1, ocr_text, embedding, len(ocr_text.split()), cost, filename, os.path.join(images_folder, f"{filename}_page_{i+1}.png")))
         conn.commit()

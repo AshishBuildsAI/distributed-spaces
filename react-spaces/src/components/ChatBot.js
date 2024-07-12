@@ -10,37 +10,42 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     const chatListRef = useRef(null);
 
     const sendMessage = async () => {
-        if (!input.trim() || !selectedSpace || !selectedFile) {
-            alert("Please provide a message, select a space, and select a file.");
+        if (!input.trim() || !selectedSpace) {
+            alert("Please provide a message and select a space.");
             return;
         }
-
+    
         if (messages.length > 0 && messages[messages.length - 1].text === input.trim()) {
             alert("Please do not send the same message repeatedly.");
             return;
         }
-
+    
         const userMessage = { sender: 'user', text: input.trim() };
         setMessages([...messages, userMessage]);
         setIsSending(true);
-
+    
         console.log('Sending message:', userMessage); // Debug log
-
+    
         try {
+            let payload = {
+                space: selectedSpace.name,
+                query: input.trim()
+            };
+    
+            if (selectedFile) {
+                payload.filename = selectedFile.name;
+            }
+    
             const response = await axios.post(
                 'http://127.0.0.1:5000/chat', // URL to the Flask backend
-                { 
-                    space: selectedSpace.name, 
-                    filename: selectedFile.name, 
-                    query: input.trim() 
-                },
+                payload,
                 {
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 }
             );
-            // alert(response.data);
+    
             console.log('API response:', response); // Debug log
             const botMessage = { sender: 'bot', text: response.data };
             setMessages(prevMessages => [...prevMessages, botMessage]);
@@ -52,7 +57,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
             setInput('');
             setIsSending(false);
         }
-    };
+    };    
 
     useEffect(() => {
         if (chatListRef.current) {
@@ -65,7 +70,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
             <Card.Header>
                 Chat With Your Documentation - {selectedSpace ? selectedSpace.name : 'No Space Selected'} / {selectedFile ? selectedFile.name : 'No File Selected'}
             </Card.Header>
-            <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
+            <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '85vh' }}>
                 <ListGroup className="chat-list flex-grow-1" ref={chatListRef} style={{ overflowY: 'auto' }}>
                     {messages.map((message, index) => (
                         <ListGroup.Item
@@ -80,7 +85,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                 {message.sender === 'bot' ? (
                                     <ReactMarkdown>{message.text}</ReactMarkdown>
                                 ) : (
-                                    <p class="text-success">{message.text}</p>
+                                    <p class="text-warning">{message.text}</p>
                                 )}
                             </span>
                             </div>

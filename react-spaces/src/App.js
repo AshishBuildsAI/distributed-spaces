@@ -8,7 +8,7 @@ import SpaceExplorer from './components/SpaceExplorer';
 import ChatBot from './components/ChatBot';
 import AdminPanel from './components/AdminPanel';
 import Footer from './components/Footer';
-import { Container, Row, Col, Navbar } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import './App.css'; // Import custom CSS for additional styling
 import Space from './models/Space'; // Import the Space class
 
@@ -55,7 +55,6 @@ function App() {
 
     return (
         <div className="d-flex flex-column min-vh-100">
-            
             <Container className="app-container flex-grow-1 mt-4">
                 <CreateSpace fetchSpaces={fetchSpaces} />
                 <Row>
@@ -67,14 +66,6 @@ function App() {
                             selectedFile={selectedFile}
                             selectedSpace={selectedSpace} // Pass the selectedSpace prop
                         />
-                    </Col>
-                    <Col md={6} className="chat-panel">
-                        <ChatBot 
-                            selectedSpace={selectedSpace} 
-                            selectedFile={selectedFile} 
-                        />
-                    </Col>
-                    <Col md={3} className="admin-panel">
                         <AdminPanel 
                             spaces={spaces}
                             setSelectedFile={setSelectedFile} 
@@ -82,6 +73,9 @@ function App() {
                             selectedFile={selectedFile}
                             selectedSpace={selectedSpace}
                         />
+                    </Col>
+                    <Col md={9} className="chat-panel">
+                        <ChatBot selectedSpace={selectedSpace} selectedFile={selectedFile} />
                     </Col>
                 </Row>
             </Container>

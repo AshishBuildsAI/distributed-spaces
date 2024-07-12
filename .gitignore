@@ -1,3 +1,5 @@
+*.ipynb
+.ipynb_checkpoints
 node_modules
 spaces
 .DS_Store

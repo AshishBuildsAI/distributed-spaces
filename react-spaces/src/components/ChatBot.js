@@ -63,7 +63,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     return (
         <Card className="chat-panel">
             <Card.Header>
-                ChatBot - {selectedSpace ? selectedSpace.name : 'No Space Selected'} / {selectedFile ? selectedFile.name : 'No File Selected'}
+                Chat With Your Documentation - {selectedSpace ? selectedSpace.name : 'No Space Selected'} / {selectedFile ? selectedFile.name : 'No File Selected'}
             </Card.Header>
             <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
                 <ListGroup className="chat-list flex-grow-1" ref={chatListRef} style={{ overflowY: 'auto' }}>

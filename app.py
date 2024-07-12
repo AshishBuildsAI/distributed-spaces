@@ -286,7 +286,7 @@ def convert_pdf(filename):
         """, (i+1, ocr_text, embedding, len(ocr_text.split()), cost, filename, os.path.join(images_folder, f"{filename}_page_{i+1}.png")))
         conn.commit()
     
-    return jsonify({"message": f"PDF converted to images in space: {space}", "imageslocation": images_folder}), 200
+    return jsonify({"message": f"Indexed PDF {filename} in space: {space}", "imageslocation": images_folder}), 200
 
 
 @app.route('/save_conversation', methods=['POST'])

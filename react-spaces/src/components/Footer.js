@@ -7,7 +7,7 @@ const Footer = () => {
             <Container>
                 <Row>
                     <Col className="text-center">
-                        &copy; {new Date().getFullYear()} Tensorkart. All Rights Reserved.
+                        Spaces Community Edition version 1.0, {new Date().getFullYear()}
                     </Col>
                 </Row>
             </Container>

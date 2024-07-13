@@ -7,7 +7,7 @@ const Footer = () => {
             <Container>
                 <Row>
                     <Col className="text-center">
-                        Spaces Community Edition version 1.0, {new Date().getFullYear()}
+                    {new Date().getFullYear()}, Spaces, Community Edition Version 1.0
                     </Col>
                 </Row>
             </Container>

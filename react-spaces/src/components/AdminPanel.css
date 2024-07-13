@@ -1,4 +1,5 @@
 .file-list-container {
-    max-height: 300px; /* Adjust height as needed */
+    max-height: 400px; /* Adjust height as needed */
     overflow-y: auto;
+   
 }

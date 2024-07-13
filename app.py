@@ -147,7 +147,7 @@ def get_top(query_embedding, conn, schema, table, space, filename=None,numrows=5
         results.sort(key=lambda x: x[-1], reverse=True)
         
         # Return the top 3 most similar documents
-        top_docs = results[:numrows]
+        top_docs = results
         conn.commit()
         return top_docs
     except Exception as e:
@@ -174,14 +174,42 @@ def create_space():
         return jsonify({"message": "Space created successfully"}), 201
     return jsonify({"message": "Space already exists"}), 400
 
+def get_postgres_size(schema, table_name):
+    query = f"""
+            SELECT 
+                pg_size_pretty(pg_total_relation_size('{schema}.' || {table_name})) as size
+            FROM 
+                information_schema.tables
+            WHERE 
+                table_schema = %s;
+                
+        """
 @app.route('/list_spaces', methods=['GET'])
 def list_spaces():
     spaces = [name for name in os.listdir(ROOT_DIR) if os.path.isdir(os.path.join(ROOT_DIR, name))]
     return jsonify({"spaces": spaces})
+def get_folder_size(folder_path):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            if os.path.isfile(filepath):
+                total_size += os.path.getsize(filepath)
+    return total_size
 
+def format_size(size):
+    """Helper function to format the size in a human-readable format."""
+    power = 1024
+    n = 0
+    power_labels = {0: '', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+    while size > power:
+        size /= power
+        n += 1
+    return f"{size:.2f} {power_labels[n]}"
 @app.route('/list_files/<space>', methods=['GET'])
 def list_files(space):
     space_path = os.path.join(ROOT_DIR, space)
+    
     if os.path.exists(space_path):
         files = []
         for f in os.listdir(space_path):

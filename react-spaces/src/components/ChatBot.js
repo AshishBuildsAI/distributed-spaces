@@ -1,16 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Card, ListGroup, Form, Button, InputGroup, Image, Spinner, Dropdown, Modal } from 'react-bootstrap';
+import { Card, ListGroup, Form, Button, InputGroup, Image, Spinner, Dropdown, Modal, Toast } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import { FaCog, FaCopy } from 'react-icons/fa';
+
+// Placeholder function for the Gemini model
+const generateGeminiResponse = (context, question) => {
+    // Simulate the Gemini response generation
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const responseText = `Generated Gemini response based on context: "${context}" and question: "${question}"`;
+            resolve({ text: responseText });
+        }, 1000); // Simulate a delay
+    });
+};
 
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [selectedModel, setSelectedModel] = useState('llama3');
+    const [selectedModel, setSelectedModel] = useState('Azure OpenAI GPT-4o');
     const [showSettings, setShowSettings] = useState(false);
-    const [showCopyButton, setShowCopyButton] = useState(true);
+    const [showCopyButton, setShowCopyButton] = useState(false);
+    const [showToast, setShowToast] = useState(false);
     const chatListRef = useRef(null);
 
     const sendMessage = async () => {
@@ -29,27 +41,36 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         setIsSending(true);
 
         try {
-            let payload = {
-                space: selectedSpace.name,
-                query: input.trim(),
-                model: selectedModel
-            };
+            let botMessageContent = '';
+            if (selectedModel === 'Gemini') {
+                const context = selectedFile ? selectedFile.name : selectedSpace.name;
+                const question = input.trim();
+                const response = await generateGeminiResponse(context, question);
+                botMessageContent = response.text;
+            } else {
+                let payload = {
+                    space: selectedSpace.name,
+                    query: input.trim(),
+                    model: selectedModel
+                };
 
-            if (selectedFile) {
-                payload.filename = selectedFile.name;
+                if (selectedFile) {
+                    payload.filename = selectedFile.name;
+                }
+
+                const response = await axios.post(
+                    'http://127.0.0.1:5000/chat', // URL to the Flask backend
+                    payload,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                botMessageContent = response.data.content || 'No response';
             }
 
-            const response = await axios.post(
-                'http://127.0.0.1:5000/chat', // URL to the Flask backend
-                payload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            const botMessageContent = response.data.content || 'No response';
             const botMessage = { sender: 'bot', text: botMessageContent };
             setMessages(prevMessages => [...prevMessages, botMessage]);
         } catch (error) {
@@ -72,7 +93,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         const handleScroll = () => {
             if (chatListRef.current) {
                 const { scrollTop, scrollHeight, clientHeight } = chatListRef.current;
-                const isAtBottom = scrollTop + clientHeight >= scrollHeight - 2;
+                const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
                 setShowCopyButton(isAtBottom);
             }
         };
@@ -97,7 +118,8 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
 
     const handleCopyToClipboard = (text) => {
         navigator.clipboard.writeText(text).then(() => {
-            alert('Copied to clipboard');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 2000);
         }).catch((err) => {
             console.error('Failed to copy text: ', err);
         });
@@ -139,7 +161,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                     </span>
                                     {message.sender === 'bot' && showCopyButton && (
                                         <FaCopy
-                                            style={{ position: 'absolute', top: 0, right: 0, cursor: 'pointer' }}
+                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.3em',color:"yellow", background: 'black', borderRadius: '50%', padding: '2px' }}
                                             onClick={() => handleCopyToClipboard(message.text)}
                                         />
                                     )}
@@ -161,6 +183,9 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                         />
                         <Button variant="primary" onClick={sendMessage} disabled={isSending}>Ask</Button>
                     </InputGroup>
+                    <div className="mt-2 text-right">
+                        <small>Powered by {selectedModel}</small>
+                    </div>
                 </Card.Body>
             </Card>
 
@@ -177,13 +202,13 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu>
+                            <Dropdown.Item eventKey="wizardlm2">Wizard LM2</Dropdown.Item>
+                            <Dropdown.Item eventKey="llama2">llama2</Dropdown.Item>
                                 <Dropdown.Item eventKey="llama3">llama3</Dropdown.Item>
-                                <Dropdown.Item eventKey="llama2">llama2</Dropdown.Item>
                                 <Dropdown.Item eventKey="mistral">mistral</Dropdown.Item>
-                                <Dropdown.Item eventKey="wizardlm2">wizardlm2</Dropdown.Item>
-                                <Dropdown.Item eventKey="gemma2">gemma2</Dropdown.Item>
-                                <Dropdown.Item eventKey="gpt-4o">Azure Open AI GPT-4o</Dropdown.Item>
-                                <Dropdown.Item eventKey="gemini">Gemini</Dropdown.Item>
+                                <Dropdown.Item eventKey="gemma2">Gemma 2</Dropdown.Item>
+                                <Dropdown.Item className='disabled' eventKey="Azure OpenAI GPT-4o">Azure OpenAI GPT-4o</Dropdown.Item>
+                                <Dropdown.Item eventKey="Gemini">Gemini</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>
                     </Form.Group>
@@ -194,6 +219,16 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                     </Button>
                 </Modal.Footer>
             </Modal>
+
+            <Toast 
+                show={showToast} 
+                onClose={() => setShowToast(false)} 
+                delay={2000} 
+                autohide 
+                style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1 }}
+            >
+                <Toast.Body>Copied to clipboard</Toast.Body>
+            </Toast>
         </>
     );
 };

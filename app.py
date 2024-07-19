@@ -292,7 +292,7 @@ def chat():
         else:
             res = get_top(embed, conn=conn, schema=dbschema, table=dbtable, space=space, numrows=10)
         
-        envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more. only using the given context {res} answer the question in as much detail as you can{question}"
+        envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more. only using the given context {res} answer the question in as much detail as you can, here is the question or instruction {question}"
             # Construct the messages with the additional parameters
         messages = [
             {"role": "system", "content": f"Space: {space}, Filename: {filename}"},

@@ -20,6 +20,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 load_dotenv()
 import logging
+from transformers import AutoTokenizer, AutoModelForCausalLM
 
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 GOOGLE_API_KEY = os.environ["GEMINI_API_KEY"]
@@ -46,6 +47,19 @@ dbtable = "spaces_eicp"
 cur = conn.cursor()
 model_dir = "models/all-MiniLM-L6-v2"
 embedding_model =''
+
+# # Load the LLAMA model and tokenizer
+# llama_model_name = "ggml-model-q4_k.gguf"
+# llama_model_directory = "./models"
+# llama_tokenizer = AutoTokenizer.from_pretrained(llama_model_name, cache_dir=llama_model_directory)
+# llama_model = AutoModelForCausalLM.from_pretrained(llama_model_name, cache_dir=llama_model_directory)
+
+# # Load the Mistral model and tokenizer
+# mistral_model_name = "mistral-7b-v0.1.Q4_K_M.gguf"
+# mistral_model_directory = "./models"
+# mistral_tokenizer = AutoTokenizer.from_pretrained(mistral_model_name, cache_dir=mistral_model_directory)
+# mistral_model = AutoModelForCausalLM.from_pretrained(mistral_model_name, cache_dir=mistral_model_directory)
+
 # Check if the model directory exists
 if not os.path.exists(model_dir):
     # Load and save the model to the specified directory
@@ -103,7 +117,7 @@ def get_top(query_embedding, conn, schema, table, space, filename=None,numrows=5
                 FROM {schema}.{table} where metadata->>'space' = %s
             """, (space))
         rows = cur.fetchall()
-        #print("Printing row 1", rows[0])
+        print("rows", len(rows))
         # Compute similarities and store results
         results = []
         wrong_embeddings = []
@@ -148,12 +162,12 @@ def get_top(query_embedding, conn, schema, table, space, filename=None,numrows=5
         
         # Return the top 3 most similar documents
         top_docs = results
-        conn.commit()
+        #conn.commit()
         return top_docs
     except Exception as e:
         print(e)
         rows = ""
-    conn.commit()
+    #conn.commit()
     return rows
 
 # Function to save OCR results to PostgreSQL
@@ -225,13 +239,47 @@ def list_files(space):
                     })
         return jsonify({"files": files})
     return jsonify({"message": "Space not found"}), 404
+def generate_response_with_model(envelope, model, tokenizer, poweredby):
+    # Tokenize the input text
+    inputs = tokenizer(envelope, return_tensors="pt")
 
+    # Generate the response
+    outputs = model.generate(**inputs, max_length=150, num_return_sequences=1)
+
+    # Decode the generated text
+    response_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    print("This response was powered by ", poweredby)
+    return {"text": response_text} 
+
+def chatIM(messages,model):
+    print(model)
+    r = requests.post(
+        "http://0.0.0.0:11434/api/chat",
+        json={"model": model, "messages": messages, "stream": True},
+        stream=True
+    )
+    r.raise_for_status()
+    output = ""
+
+    for line in r.iter_lines():
+        body = json.loads(line)
+        if "error" in body:
+            raise Exception(body["error"])
+        if body.get("done") is False:
+            message = body.get("message", "")
+            content = message.get("content", "")
+            output += content
+        if body.get("done", False):
+            message["content"] = output
+            return message
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
     space = data.get('space')
     filename = data.get('filename')
     question = data.get('query')
+    model = data.get('model')
+    #model_choice = data.get('model_choice', 'llama','gemini', 'mistral') 
     
     if not space or not question:
         return jsonify({"error": "Space and query are required"}), 400
@@ -244,10 +292,28 @@ def chat():
         else:
             res = get_top(embed, conn=conn, schema=dbschema, table=dbtable, space=space, numrows=10)
         
-        envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more ... only using the given context {res} answer the question {question}"
-        response = language_model.generate_content(envelope)
-        print("Bot : ", res, response.text)
-        return jsonify(response.text)
+        envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more. only using the given context {res} answer the question in as much detail as you can{question}"
+            # Construct the messages with the additional parameters
+        messages = [
+            {"role": "system", "content": f"Space: {space}, Filename: {filename}"},
+            {"role": "user", "content": envelope}
+        ]
+
+        try:
+            print(model)
+            response_message = chatIM(messages,model)
+            return jsonify(response_message), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+            # if model_choice == 'mistral':
+            #     response = generate_response_with_model(envelope, mistral_model, mistral_tokenizer, "Mistral")
+            
+            # elif model_choice=='llama':
+            #     response = generate_response_with_model(envelope, llama_model, llama_tokenizer, "llama")
+        # else:
+        #     response = language_model.generate_content(envelope)
+        # print("Bot : ", res, response.text)
+        # return jsonify(response.text)
     except requests.exceptions.RequestException as e:
         return jsonify({"error": str(e)}), 500
 

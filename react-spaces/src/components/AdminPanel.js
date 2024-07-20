@@ -24,14 +24,38 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
                         }
                     }
                 );
-                toast.success(response.data.message);
+                toast.success(response.data.message, {
+                    position: "top-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
             } catch (error) {
-                toast.error('Error converting PDF');
+                toast.error('Error converting PDF', {
+                    position: "top-center",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
             } finally {
                 setLoading(false);
             }
         } else {
-            toast.warn('No file selected or space selected');
+            toast.warn('No file selected or space selected', {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+            });
         }
     };
 
@@ -41,7 +65,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
             <Card.Body>
                 {selectedSpace ? (
                     <>
-                        <p data-bs-toggle="tooltip" data-bs-placement="right" title="Tooltip on right" className="badge bg-primary">Total Files: {selectedSpace.files.length}</p>
+                        <p className="badge bg-primary">Total Files: {selectedSpace.files.length}</p>
                         <p className="badge bg-success">Indexed Files: {selectedSpace.files.filter(file => file.isIndexed).length}</p>
                         <p className="badge bg-warning">Not Indexed Files: {selectedSpace.files.filter(file => !file.isIndexed).length}</p>
                         <div className='file-list-container'>

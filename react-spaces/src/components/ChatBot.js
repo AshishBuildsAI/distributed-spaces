@@ -19,7 +19,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [selectedModel, setSelectedModel] = useState('Azure OpenAI GPT-4o');
+    const [selectedModel, setSelectedModel] = useState('wizardlm2');
     const [showSettings, setShowSettings] = useState(false);
     const [showCopyButton, setShowCopyButton] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -59,7 +59,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                 }
 
                 const response = await axios.post(
-                    'http://127.0.0.1:5000/chat', // URL to the Flask backend
+                    'http://127.0.0.1:5000/chat', // URL to the new API endpoint
                     payload,
                     {
                         headers: {
@@ -161,7 +161,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                     </span>
                                     {message.sender === 'bot' && showCopyButton && (
                                         <FaCopy
-                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.3em',color:"yellow", background: 'black', borderRadius: '50%', padding: '2px' }}
+                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.3em', color:"yellow", background: 'black', borderRadius: '50%', padding: '2px' }}
                                             onClick={() => handleCopyToClipboard(message.text)}
                                         />
                                     )}
@@ -202,8 +202,8 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu>
-                            <Dropdown.Item eventKey="wizardlm2">Wizard LM2</Dropdown.Item>
-                            <Dropdown.Item eventKey="llama2">llama2</Dropdown.Item>
+                                <Dropdown.Item eventKey="wizardlm2">Wizard LM2</Dropdown.Item>
+                                <Dropdown.Item eventKey="llama2">llama2</Dropdown.Item>
                                 <Dropdown.Item eventKey="llama3">llama3</Dropdown.Item>
                                 <Dropdown.Item eventKey="mistral">mistral</Dropdown.Item>
                                 <Dropdown.Item eventKey="gemma2">Gemma 2</Dropdown.Item>

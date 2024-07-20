@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ListGroup, Button, ProgressBar } from 'react-bootstrap';
+import { ListGroup, ProgressBar } from 'react-bootstrap';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './SpaceExplorer.css'; // Ensure this file exists and is correctly imported
-import { AiOutlineUpload } from 'react-icons/ai'; // Import an upload icon
+import './SpaceExplorer.css';
+import { AiOutlineUpload } from 'react-icons/ai';
 
 const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile }) => {
     const [file, setFile] = useState(null);
@@ -21,9 +21,9 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
     }, [spaces]);
 
     const fetchFiles = (space) => {
-        setSelectedSpace(space); // Update the selected space in App component
-        setSelectedSpaceState(space); // Update local state
-        setSelectedFile(null); // Clear selected file when space is changed
+        setSelectedSpace(space);
+        setSelectedSpaceState(space);
+        setSelectedFile(null);
     };
 
     const handleFileChange = (e) => {

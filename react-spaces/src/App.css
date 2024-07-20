@@ -19,6 +19,7 @@ html, body, #root, .App {
 
 .row {
   flex-grow: 1;
+  display: flex;
 }
 
 .sidebar, .chat-panel, .admin-panel {
@@ -39,4 +40,59 @@ html, body, #root, .App {
 
 .input-group {
   margin-top: auto;
+}
+
+.chat-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conversations {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.message {
+  margin-bottom: 10px;
+}
+
+.user-message {
+  text-align: right;
+  background-color: #d1e7dd;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.bot-message {
+  text-align: left;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.settings-icon {
+  cursor: pointer;
+}
+
+.powered-by {
+  text-align: center;
+  font-size: 0.9em;
+  color: #6c757d;
+  margin-top: 10px;
+}
+
+.fixed-size {
+  height: calc(100vh - 200px); /* Adjust as needed */
+  overflow-y: auto;
 }

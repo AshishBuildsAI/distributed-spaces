@@ -11,3 +11,4 @@ models
 package-list.txt
 .env
 .vscode 
+*.ipynb

@@ -22,7 +22,7 @@ const CreateSpace = ({ fetchSpaces }) => {
             setSpaceName(''); // Clear the input field after successful creation
             fetchSpaces(); // Refresh the list of spaces
         } catch (error) {
-            toast.error('Error creating space', {
+            toast.error(error.message + {
                 position: "top-center",
                 autoClose: 5000,
                 hideProgressBar: false,

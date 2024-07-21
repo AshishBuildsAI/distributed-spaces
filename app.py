@@ -25,7 +25,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from sqltools.dataaccess import DataKeeper
 dbkeeper = DataKeeper()
 
-
 ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
 GOOGLE_API_KEY = os.environ["GEMINI_API_KEY"]
@@ -45,8 +44,6 @@ conn = psycopg2.connect(
     port=os.environ["PORT"]
 )
 
-
-
 db = os.environ["DBNAME"]
 dbschema = os.environ["SCHEMA"]
 dbtable = "spaces_embeddings"
@@ -54,7 +51,16 @@ cur = conn.cursor()
 model_dir = "models/all-MiniLM-L6-v2"
 embedding_model = ''
 logging.basicConfig(level=logging.DEBUG)
+# Example usage:
+db_config = {
+    'dbname': 'your_database',
+    'user': 'your_user',
+    'password': 'your_password',
+    'host': 'your_host',
+    'port': 'your_port'
+}
 
+#db_manager = DatabaseManager(db_config)
 # Check if the model directory exists
 if not os.path.exists(model_dir):
     # Load and save the model to the specified directory
@@ -70,7 +76,6 @@ def perform_ocr(image_path):
     ocr_text = "\n".join([line[1][0] for line in result[0]])
     return ocr_text
 
-#moved
 def get_embeddings(content):
     url = "http://localhost:11434/api/embeddings"
     payload = {
@@ -83,75 +88,73 @@ def get_embeddings(content):
     response = requests.post(url, data=json.dumps(payload), headers=headers)
     response.raise_for_status()
     return response.json()["embedding"]
-#moved
+
 def get_top(query_embedding, conn, schema, table, space, filename=None, numrows=5):
     try:
-        print(filename)
-        if filename:
-            cur.execute(f"""
-                SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
-                FROM {schema}.{table} where metadata->>'space' = %s
-                and source = %s
-            """, (space, filename))
-        else:
-            cur.execute(f"""
-                SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
-                FROM {schema}.{table} where metadata->>'space' = %s
-            """, (space,))
-        rows = cur.fetchall()
-        print("rows", len(rows))
-        # Compute similarities and store results
-        results = []
-        wrong_embeddings = []
-        for row in rows:
-            pageno, context, metadata, source, imagepath, embedding_str, numtokens = row
-            try:
-                if isinstance(embedding_str, str):
-                    embedding = json.loads(embedding_str)
-                elif isinstance(embedding_str, (bytes, bytearray)):
-                    embedding = json.loads(embedding_str.decode('utf-8'))
-                elif isinstance(embedding_str, list):
-                    embedding = np.array(embedding_str)
-                else:
-                    embedding = embedding_str
+        with conn.cursor() as cursor:
+            if filename:
+                cur.execute(f"""
+                    SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
+                    FROM {schema}.{table} where metadata->>'space' = %s
+                    and source = %s
+                """, (space, filename))
+            else:
+                cur.execute(f"""
+                    SELECT pageno, context, metadata, source, imagepath, embedding, COALESCE(numtokens, 0)
+                    FROM {schema}.{table} where metadata->>'space' = %s
+                """, (space,))
+            rows = cur.fetchall()
+            print("rows", len(rows))
+            results = []
+            for row in rows:
+                pageno, context, metadata, source, imagepath, embedding_str, numtokens = row
+                try:
+                    if isinstance(embedding_str, str):
+                        embedding = json.loads(embedding_str)
+                    elif isinstance(embedding_str, (bytes, bytearray)):
+                        embedding = json.loads(embedding_str.decode('utf-8'))
+                    elif isinstance(embedding_str, list):
+                        embedding = np.array(embedding_str)
+                    else:
+                        embedding = embedding_str
 
-                # Safe normalization
-                norm = np.linalg.norm(embedding)
-                if norm == 0:
-                    logging.warning(f"Skipping normalization for zero vector: {embedding}")
-                    continue
+                    norm = np.linalg.norm(embedding)
+                    if norm == 0:
+                        logging.warning(f"Skipping normalization for zero vector: {embedding}")
+                        continue
 
-                embedding = embedding / norm
-                similarity = np.dot(query_embedding, embedding)
+                    embedding = embedding / norm
+                    similarity = np.dot(query_embedding, embedding)
 
-                # Ensure numtokens is a valid number
-                numtokens = numtokens if numtokens is not None else 0
+                    numtokens = numtokens if numtokens is not None else 0
+                    weighted_similarity = similarity * (1 + 0.01 * numtokens)
 
-                # Optionally, weight similarity by the number of tokens or other criteria
-                weighted_similarity = similarity * (1 + 0.01 * numtokens)
+                    results.append((pageno, context, metadata, source, imagepath, weighted_similarity))
+                except json.JSONDecodeError as e:
+                    logging.error(f"JSON decode error for row: {e}")
+                except Exception as e:
+                    logging.error(f"Error processing row : {e}")
 
-                results.append((pageno, context, metadata, source, imagepath, weighted_similarity))
-            except json.JSONDecodeError as e:
-                logging.error(f"JSON decode error for row: {e}")
-            except Exception as e:
-                logging.error(f"Error processing row : {e}")
+            results.sort(key=lambda x: x[-1], reverse=True)
+            top_docs = results
 
-        results.sort(key=lambda x: x[-1], reverse=True)
-
-        top_docs = results
-        return top_docs
+            return top_docs
     except Exception as e:
         print(e)
         rows = ""
     return rows
-#moved
-# Function to save OCR results to PostgreSQL
+
 def save_ocr_result(source, pageno, imagesource, ocrtext, embedding, cost, metadata):
-    cur.execute(f"""
-        INSERT INTO {dbschema}.spaces_embeddings (source, pageno, imagepath, context, embedding, cost, metadata)
-        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
-    """, (source, pageno, imagesource, ocrtext, embedding, cost, json.dumps(metadata)))
-    conn.commit()
+    try:
+        cur.execute(f"""
+            INSERT INTO {dbschema}.spaces_embeddings (source, pageno, imagepath, context, embedding, cost, metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
+        """, (source, pageno, imagesource, ocrtext, embedding, cost, json.dumps(metadata)))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error saving OCR result: {e}")
+        raise
     return cur.fetchone()[0]
 
 @app.route('/create_space', methods=['POST'])
@@ -160,14 +163,10 @@ def create_space():
     space_path = os.path.join(ROOT_DIR, space_name)
     if not os.path.exists(space_path):
         os.makedirs(space_path)
-        with conn.cursor(cursor_factory=DictCursor) as cursor:
-            cursor.execute("INSERT INTO org.spaces (name) VALUES (%s) RETURNING id", (space_name,))
-            #space_id = cursor.fetchone()['id']
-            conn.commit()
+        dbkeeper.create_space(space_name)
         return jsonify({"message": f"New Space {space_name} created successfully"}), 201
     return jsonify({"message": f"Space '{space_name}' already exists"}), 400
 
-#moved - but incomplete
 @app.route('/save_conversation', methods=['POST'])
 def save_conversation():
     data = request.json
@@ -175,7 +174,7 @@ def save_conversation():
     filename = data.get('filename', '')
     message = data.get('message')
     user_ip = request.remote_addr
-    
+
     dbkeeper.save_conversation(space=space, filename=filename, message=message, user_ip=user_ip)
     if not space or not message:
         return jsonify({"status": "error", "message": "Space and message are required"}), 400
@@ -189,36 +188,42 @@ def save_conversation():
     )
     cursor = conn.cursor()
 
-    cursor.execute(f"SELECT id FROM {dbschema}.spaces WHERE name = %s", (space,))
-    space_id = cursor.fetchone()
-    if not space_id:
-        cursor.execute(f"INSERT INTO {dbschema}.spaces (name) VALUES (%s) RETURNING id", (space,))
-        space_id = cursor.fetchone()[0]
-    else:
-        space_id = space_id[0]
-
-    if filename:
-        cursor.execute(f"SELECT id FROM {dbschema}.spaces_files WHERE name = %s AND space_id = %s", (filename, space_id))
-        file_id = cursor.fetchone()
-        if not file_id:
-            cursor.execute(f"INSERT INTO {dbschema}.spaces_files (name, space_id, file_size_mb) VALUES (%s, %s, %s) RETURNING id", (filename, space_id, 0))
-            file_id = cursor.fetchone()[0]
+    try:
+        cursor.execute(f"SELECT id FROM {dbschema}.spaces WHERE name = %s", (space,))
+        space_id = cursor.fetchone()
+        if not space_id:
+            cursor.execute(f"INSERT INTO {dbschema}.spaces (name) VALUES (%s) RETURNING id", (space,))
+            space_id = cursor.fetchone()[0]
         else:
-            file_id = file_id[0]
-    else:
-        file_id = None
+            space_id = space_id[0]
 
-    text_content = message['text']
-    embedding = get_embeddings(text_content)
+        if filename:
+            cursor.execute(f"SELECT id FROM {dbschema}.spaces_files WHERE name = %s AND space_id = %s", (filename, space_id))
+            file_id = cursor.fetchone()
+            if not file_id:
+                cursor.execute(f"INSERT INTO {dbschema}.spaces_files (name, space_id, file_size_mb) VALUES (%s, %s, %s) RETURNING id", (filename, space_id, 0))
+                file_id = cursor.fetchone()[0]
+            else:
+                file_id = file_id[0]
+        else:
+            file_id = None
 
-    cursor.execute(f"""
-        INSERT INTO {dbschema}.spaces_conversations (sender, text, timestamp, space_id, file_id, user_ip, embedding)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (message['sender'], message['text'], message['timestamp'], space_id, file_id, user_ip, embedding))
+        text_content = message['text']
+        embedding = get_embeddings(text_content)
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        cursor.execute(f"""
+            INSERT INTO {dbschema}.spaces_conversations (sender, text, timestamp, space_id, file_id, user_ip, embedding)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (message['sender'], message['text'], message['timestamp'], space_id, file_id, user_ip, embedding))
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error saving conversation: {e}")
+        return jsonify({"status": "error", "message": "Error saving conversation"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
     return jsonify({"status": "conversation saved"})
 
@@ -248,7 +253,6 @@ def format_size(size):
 @app.route('/list_files/<space>', methods=['GET'])
 def list_files(space):
     space_path = os.path.join(ROOT_DIR, space)
-    
     if os.path.exists(space_path):
         files = []
         for f in os.listdir(space_path):
@@ -258,7 +262,6 @@ def list_files(space):
                     images_folder = file_path[0:file_path.rindex(".")]
                     images_folder_path = images_folder
                     is_indexed = os.path.isdir(images_folder_path)
-                    ## TODO : check if all pages have db records only then say indexed is true
                     files.append({
                         "name": f,
                         "isIndexed": is_indexed
@@ -274,7 +277,6 @@ def generate_response_with_model(envelope, model, tokenizer, poweredby):
     return {"text": response_text}
 
 def chatIM(messages, model):
-    print(model)
     r = requests.post(
         "http://0.0.0.0:11434/api/chat",
         json={"model": model, "messages": messages, "stream": True},
@@ -302,18 +304,23 @@ def chat():
     filename = data.get('filename')
     question = data.get('query')
     model = data.get('model')
-    
+    spaces = dbkeeper.get_space_by_name(space)
+    space_id = spaces["id"]
+    files = dbkeeper.get_file_by_name(filename)
+    file_id = files["id"]
+    user_ip = request.remote_addr
     if not space or not question:
         return jsonify({"error": "Space and query are required"}), 400
-    
+
     try:
         embed = get_embeddings(question)
-        
+
         if filename:
-            res = get_top(embed, conn=conn, schema=dbschema, table=f"{dbschema}.spaces_embeddings", space=space, filename=filename, numrows=10)
+            res = get_top(embed, conn=conn, schema=dbschema, table=f"spaces_embeddings", space=space, filename=filename, numrows=10)
         else:
-            res = get_top(embed, conn=conn, schema=dbschema, table=f"{dbschema}.spaces_embeddings", space=space, numrows=10)
-        
+            res = get_top(embed, conn=conn, schema=dbschema, table=f"spaces_embeddings", space=space, numrows=10)
+
+        citations = [{"fileName": doc[3], "thumbnail": doc[4]} for doc in res[:2]]
         envelope = f"You are a friendly AI assistant who finds information for HR assistants, Engineers, sales teams and many more. only using the given context {res} answer the question in as much detail as you can, here is the question or instruction {question}"
         messages = [
             {"role": "system", "content": f"Space: {space}, Filename: {filename}"},
@@ -323,11 +330,30 @@ def chat():
         try:
             if model == "Gemini":
                 response_message = gemini_model.generate_content(envelope)
-                return jsonify(response_message.text), 200
-            elif model =="gpt4-o":
+                response = {"text": response_message.text, "citations": citations}
+                # Create the conversation in DB
+                question_to_index = f"{space}/{filename} - {question}"  
+                question_to_indexembed =  get_embeddings(question_to_index)
+                inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
+                
+                response_to_index = f"{space}/{filename} - {response_message.text}"  
+                response_to_indexembed =  get_embeddings(response_to_index)
+                dbkeeper.create_conversation(sender="ai", text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+                return jsonify(response), 200
+            elif model == "gpt4-o":
                 todo = "Implement openai"
             else:
                 response_message = chatIM(messages, model)
+                response_message["citations"] = citations
+                # Create the conversation in DB
+                question_to_index = f"{space}/{filename} - {question}"  
+                question_to_indexembed =  get_embeddings(question_to_index)
+                inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
+                
+                response_to_index = f"{space}/{filename} - {response_message['content']}"  
+                response_to_indexembed =  get_embeddings(response_to_index)
+                dbkeeper.create_conversation(sender='ai', text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+            
             return jsonify(response_message), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -345,6 +371,9 @@ def upload_file(space):
     if not os.path.exists(space_path):
         return jsonify({"message": "Space not found"}), 404
     file.save(os.path.join(space_path, file.filename))
+    result = dbkeeper.get_space_by_name(space)
+    file_size_mb = os.path.getsize(os.path.join(space_path, file.filename)) / (1024 * 1024)
+    dbkeeper.create_file(file.filename, int(result["id"]),file_size_mb)
     return jsonify({"message": "File uploaded successfully"}), 200
 
 @app.route('/stopServer', methods=['GET'])
@@ -360,14 +389,15 @@ def convert_pdf(filename):
 
     space_path = os.path.join(ROOT_DIR, space)
     filepath = os.path.join(space_path, filename)
-    
+
     if not os.path.exists(filepath):
         return jsonify({"error": "File not found"}), 404
-    
+
     pdf_doc = InputDocument(document_name=filename, file_path=filepath)
     images_folder = pdf_doc.imagesfolder
-    
+
     embeddings = []
+    i = 0
     for image_file in os.listdir(images_folder):
         if image_file.endswith(".png"):
             image_path = os.path.join(images_folder, image_file)
@@ -377,17 +407,25 @@ def convert_pdf(filename):
             content = f"{metadata} {ocr_text}"
             embedding = get_embeddings(content)
             cost = len(content.split()) * 0.0001
-            
-            save_ocr_result(source=filename, pageno=pageno, imagesource=image_path, ocrtext=ocr_text, embedding=embedding, cost=cost, metadata=metadata)
+            files = dbkeeper.get_file_by_name(filename)
+            #imagepath=os.path.join(images_folder, f"{filename}_page_{i+1}.png")
+            dbkeeper.create_embedding(pageno=pageno, metadata=json.dumps(metadata), context=content, embedding=embedding, numtokens=len(ocr_text.split()), cost=cost, tabletext="", source=filename, imagepath=image_path, file_id=files["id"])
+            #save_ocr_result(source=filename, pageno=pageno, imagesource=image_path, ocrtext=ocr_text, embedding=embedding, cost=cost, metadata=metadata)
             embeddings.append(embedding)
-    
-    for i, embedding in enumerate(embeddings):
-        cur.execute(f"""
-            INSERT INTO {dbschema}.spaces_embeddings (pageno, context, embedding, numtokens, cost, source, imagepath)
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
-        """, (i+1, ocr_text, embedding, len(ocr_text.split()), cost, filename, os.path.join(images_folder, f"{filename}_page_{i+1}.png")))
-        conn.commit()
-    
+            i +=1
+
+    # for i, embedding in enumerate(embeddings):
+    #     try:
+    #         cur.execute(f"""
+    #             INSERT INTO {dbschema}.spaces_embeddings (pageno, context, embedding, numtokens, cost, source, imagepath)
+    #             VALUES (%s, %s, %s, %s, %s, %s, %s);
+    #         """, (i+1, ocr_text, embedding, len(ocr_text.split()), cost, filename, os.path.join(images_folder, f"{filename}_page_{i+1}.png")))
+    #         conn.commit()
+    #     except Exception as e:
+    #         conn.rollback()
+    #         logging.error(f"Error saving embedding: {e}")
+    #         raise
+
     return jsonify({"message": f"Indexed PDF {filename} in space: {space}", "imageslocation": images_folder}), 200
 
 @app.route('/get_conversations', methods=['GET'])
@@ -405,37 +443,38 @@ def get_conversations():
     )
     cursor = conn.cursor()
 
-    cursor.execute(f"""
-        SELECT sender, text, timestamp, space_id, file_id, user_ip, embedding
-        FROM {dbschema}.spaces_conversations
-        WHERE user_ip = %s
-    """, (ip_address,))
-    conversations = cursor.fetchall()
-
-    if not conversations and space:
-        cursor.execute(f"""
+    try:
+        # Base query
+        base_query = f"""
             SELECT sender, text, timestamp, space_id, file_id, user_ip, embedding
             FROM {dbschema}.spaces_conversations
-            WHERE space_id = (SELECT id FROM {dbschema}.spaces WHERE name = %s)
-        """, (space,))
+            WHERE user_ip = %s
+        """
+        query_params = [ip_address]
+
+        # Add space filter if provided
+        if space:
+            base_query += f" AND space_id = (SELECT id FROM {dbschema}.spaces WHERE name = %s)"
+            query_params.append(space)
+
+        # Add filename filter if provided
+        if filename:
+            base_query += f" AND file_id = (SELECT id FROM {dbschema}.spaces_files WHERE name = %s AND space_id = (SELECT id FROM {dbschema}.spaces WHERE name = %s))"
+            query_params.extend([filename, space])
+
+        cursor.execute(base_query, tuple(query_params))
         conversations = cursor.fetchall()
 
-        if not conversations and filename:
-            cursor.execute(f"""
-                SELECT sender, text, timestamp, space_id, file_id, user_ip, embedding
-                FROM {dbschema}.spaces_conversations
-                WHERE file_id = (
-                    SELECT id
-                    FROM {dbschema}.spaces_files
-                    WHERE name = %s AND space_id = (SELECT id FROM {dbschema}.spaces WHERE name = %s)
-                )
-            """, (filename, space))
-            conversations = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Error getting conversations: {e}")
+        return jsonify({"error": "Error getting conversations"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
     return jsonify({"conversations": conversations})
+
 
 if __name__ == '__main__':
     if not os.path.exists(ROOT_DIR):

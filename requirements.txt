@@ -9,5 +9,4 @@ transformers
 openai
 fpdf
 sentence_transformers
-llama-cpp-python
 pymupdf

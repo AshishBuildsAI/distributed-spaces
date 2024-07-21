@@ -6,12 +6,14 @@ import { FaCog, FaCopy } from 'react-icons/fa';
 
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
+    const [pastConversations, setPastConversations] = useState([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [selectedModel, setSelectedModel] = useState('wizardlm2');
     const [showSettings, setShowSettings] = useState(false);
     const [showCopyButton, setShowCopyButton] = useState(false);
     const [showToast, setShowToast] = useState(false);
+    const [expandedImage, setExpandedImage] = useState(null);
     const chatListRef = useRef(null);
 
     const sendMessage = async () => {
@@ -31,6 +33,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
 
         try {
             let botMessageContent = '';
+            let citations = [];
             let payload = {
                 space: selectedSpace.name,
                 query: input.trim(),
@@ -50,14 +53,14 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                     }
                 }
             );
-            //alert(response.data)
             botMessageContent = response?.data?.content || response?.data || 'No response';
-           
-            const botMessage = { sender: 'bot', text: botMessageContent };
+            citations = response?.data?.citations || [];
+
+            const botMessage = { sender: 'bot', text: botMessageContent, citations: citations };
             setMessages(prevMessages => [...prevMessages, botMessage]);
         } catch (error) {
             console.error('Error sending message:', error);
-            const errorMessage = { sender: 'bot', text: 'Error processing your request.' };
+            const errorMessage = { sender: 'bot', text: 'Error processing your request.', citations: [] };
             setMessages(prevMessages => [...prevMessages, errorMessage]);
         } finally {
             setInput('');
@@ -65,11 +68,48 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         }
     };
 
+    const fetchPastConversations = async (spaceName, fileName) => {
+        try {
+            const response = await axios.get('http://127.0.0.1:5000/get_conversations', {
+                params: { space: spaceName, filename: fileName },
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            console.log('Response data:', response.data);
+            const conversationsData = response.data.conversations;
+
+            // Transform the conversations data to the expected format and remove space/filename prefix
+            const conversations = conversationsData.map(conversation => {
+                const text = conversation[1].replace(/^.*? - /, '');
+                return {
+                    sender: conversation[0],
+                    text: text,
+                    timestamp: conversation[2],
+                    // You can add more fields here if needed
+                };
+            });
+
+            console.log('Conversations array:', conversations);
+
+            conversations.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            setPastConversations(conversations);
+        } catch (error) {
+            console.error('Error fetching past conversations:', error);
+            setPastConversations([]);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedSpace) {
+            fetchPastConversations(selectedSpace.name, selectedFile ? selectedFile.name : null);
+        }
+    }, [selectedSpace, selectedFile]);
+
     useEffect(() => {
         if (chatListRef.current) {
             chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, pastConversations]);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -107,6 +147,17 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         });
     };
 
+    const handleImageExpand = (imageSrc) => {
+        setExpandedImage(imageSrc);
+    };
+
+    const handleImageClose = () => {
+        setExpandedImage(null);
+    };
+
+    // Combine past conversations and current messages
+    const combinedMessages = [...pastConversations, ...messages];
+
     return (
         <>
             <Card className="chat-panel">
@@ -125,40 +176,61 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                 </Card.Header>
                 <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '85vh' }}>
                     <ListGroup className="chat-list flex-grow-1" ref={chatListRef} style={{ overflowY: 'auto' }}>
-                        {messages.map((message, index) => (
-                            <ListGroup.Item
-                                key={index}
-                                className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
-                            >
-                                {message.sender === 'bot' && (
-                                    <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
-                                )}
-                                <div style={{ position: 'relative', width: '100%' }}>
-                                    <span style={{ whiteSpace: 'pre-wrap' }}>
-                                        {message.sender === 'bot' ? (
-                                            <ReactMarkdown>{message.text}</ReactMarkdown>
-                                        ) : (
-                                            <p className="text-warning">{message.text}</p>
-                                        )}
-                                    </span>
-                                    {message.sender === 'bot' && showCopyButton && (
-                                        <FaCopy
-                                            className='btn-success'
-                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.2em',  background: 'black', borderRadius: '50%', padding: '2px' }}
-                                            onClick={() => handleCopyToClipboard(message.text)}
-                                        />
+                        {combinedMessages.map((message, index) => (
+                            <React.Fragment key={index}>
+                                <ListGroup.Item
+                                    className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
+                                >
+                                    {message.sender === 'bot' && (
+                                        <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
                                     )}
-                                </div>
-                                {message.sender === 'user' && (
-                                    <Image src="./user_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
+                                    <div style={{ position: 'relative', width: '100%' }}>
+                                        <span style={{ whiteSpace: 'pre-wrap' }}>
+                                            {message.sender === 'bot' ? (
+                                                <ReactMarkdown>{message.text}</ReactMarkdown>
+                                            ) : (
+                                                <p className="text-warning">{message.text}</p>
+                                            )}
+                                        </span>
+                                        {message.sender === 'bot' && showCopyButton && (
+                                            <FaCopy
+                                                className='btn-success'
+                                                style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.2em', background: 'black', borderRadius: '50%', padding: '2px' }}
+                                                onClick={() => handleCopyToClipboard(message.text)}
+                                            />
+                                        )}
+                                    </div>
+                                    {message.sender === 'user' && (
+                                        <Image src="./user_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
+                                    )}
+                                </ListGroup.Item>
+                                {message.sender === 'bot' && message.citations && message.citations.length > 0 && (
+                                    <Card className="mb-2" style={{ marginLeft: '40px', marginRight: '40px' }}>
+                                        <Card.Header>Citations</Card.Header>
+                                        <Card.Body>
+                                            {message.citations.slice(0, 2).map((citation, citationIndex) => (
+                                                <div key={citationIndex} className="d-flex mb-2">
+                                                    <Image
+                                                        src={citation.thumbnail}
+                                                        rounded
+                                                        style={{ width: '50px', height: '50px', marginRight: '10px', cursor: 'pointer' }}
+                                                        onClick={() => handleImageExpand(citation.thumbnail)}
+                                                    />
+                                                    <div>
+                                                        <div>{citation.fileName}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </Card.Body>
+                                    </Card>
                                 )}
-                            </ListGroup.Item>
+                            </React.Fragment>
                         ))}
                     </ListGroup>
                     <InputGroup className="mt-3">
                         <Form.Control
                             type="text"
-                            placeholder="How may I help you?, built by DASCoE"
+                            placeholder="How may I help you?, built by TensorKart"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && !isSending && sendMessage()}
@@ -212,6 +284,20 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
             >
                 <Toast.Body>Copied to clipboard</Toast.Body>
             </Toast>
+
+            <Modal show={expandedImage !== null} onHide={handleImageClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Image Preview</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Image src={expandedImage} style={{ width: '100%' }} />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleImageClose}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </>
     );
 };

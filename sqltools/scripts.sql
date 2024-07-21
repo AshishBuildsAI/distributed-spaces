@@ -2,7 +2,8 @@
 CREATE TABLE org.spaces (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
-    total_file_size_mb NUMERIC DEFAULT 0 -- Total file size on disk in megabytes
+    total_file_size_mb NUMERIC DEFAULT 0, -- Total file size on disk in megabytes
+    created date NOT NULL
 );
 
 -- Create the files table with an additional column for file size in megabytes
@@ -10,7 +11,8 @@ CREATE TABLE org.spaces_files (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     space_id INTEGER REFERENCES org.spaces(id),
-    file_size_mb NUMERIC NOT NULL -- File size in megabytes
+    file_size_mb NUMERIC NOT NULL, -- File size in megabytes
+    created date NOT NULL
 );
 
 -- Create the conversations table
@@ -26,8 +28,6 @@ CREATE TABLE org.spaces_conversations (
     embedding VECTOR(768) -- Column to store the vector representation of the conversation
 );
 
--- Create an index on the user_ip column for faster querying
-CREATE INDEX idx_spaces_conversations_user_ip ON org.spaces_conversations(user_ip);
 
 -- Create the embeddings table with file_id column
 CREATE TABLE IF NOT EXISTS org.spaces_embeddings (
@@ -41,11 +41,22 @@ CREATE TABLE IF NOT EXISTS org.spaces_embeddings (
     tabletext TEXT,
     source TEXT,
     imagepath TEXT,
-    file_id INTEGER REFERENCES org.spaces_files(id) -- Foreign key to spaces_files table
+    file_id INTEGER REFERENCES org.spaces_files(id), -- Foreign key to spaces_files table
+    created date NOT NULL
 );
 
 ALTER TABLE IF EXISTS org.spaces_embeddings
     OWNER TO postgres;
+
+-- Create index for faster querying
+CREATE INDEX idx_spaces_conversations_user_ip ON org.spaces_conversations(user_ip);
+CREATE INDEX IF NOT EXISTS idx_spaces_conversations_user_ip ON org.spaces_conversations(user_ip);
+CREATE INDEX IF NOT EXISTS idx_spaces_conversations_space_id ON org.spaces_conversations(space_id);
+CREATE INDEX IF NOT EXISTS idx_spaces_conversations_file_id ON org.spaces_conversations(file_id);
+
+-- Create indexes on the embeddings table
+CREATE INDEX IF NOT EXISTS idx_spaces_embeddings_id ON org.spaces_embeddings(id);
+CREATE INDEX IF NOT EXISTS idx_spaces_embeddings_source ON org.spaces_embeddings(source);
 
 -- Create the necessary triggers
 

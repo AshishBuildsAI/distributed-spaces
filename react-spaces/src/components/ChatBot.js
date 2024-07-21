@@ -181,12 +181,12 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                 <ListGroup.Item
                                     className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
                                 >
-                                    {message.sender === 'bot' && (
+                                    {(message.sender === 'bot' || message.sender === 'ai') && (
                                         <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
                                     )}
                                     <div style={{ position: 'relative', width: '100%' }}>
                                         <span style={{ whiteSpace: 'pre-wrap' }}>
-                                            {message.sender === 'bot' ? (
+                                            {(message.sender === 'bot' || message.sender === 'ai') ? (
                                                 <ReactMarkdown>{message.text}</ReactMarkdown>
                                             ) : (
                                                 <p className="text-warning">{message.text}</p>

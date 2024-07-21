@@ -91,7 +91,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
 
     return (
         <div className="admin-panel">
-            <h3>Spaces</h3>
+            <h5 className='text-info-emphasis'>Spaces</h5>
             <ListGroup className="list-group">
                 {spaces.map((space, index) => (
                     <ListGroup.Item

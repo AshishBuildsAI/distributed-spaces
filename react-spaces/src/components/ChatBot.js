@@ -42,35 +42,28 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
 
         try {
             let botMessageContent = '';
-            if (selectedModel === 'Gemini') {
-                const context = selectedFile ? selectedFile.name : selectedSpace.name;
-                const question = input.trim();
-                const response = await generateGeminiResponse(context, question);
-                botMessageContent = response.text;
-            } else {
-                let payload = {
-                    space: selectedSpace.name,
-                    query: input.trim(),
-                    model: selectedModel
-                };
+            let payload = {
+                space: selectedSpace.name,
+                query: input.trim(),
+                model: selectedModel
+            };
 
-                if (selectedFile) {
-                    payload.filename = selectedFile.name;
-                }
-
-                const response = await axios.post(
-                    'http://127.0.0.1:5000/chat', // URL to the new API endpoint
-                    payload,
-                    {
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-
-                botMessageContent = response.data.content || 'No response';
+            if (selectedFile) {
+                payload.filename = selectedFile.name;
             }
 
+            const response = await axios.post(
+                'http://127.0.0.1:5000/chat', // URL to the new API endpoint
+                payload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            //alert(response.data)
+            botMessageContent = response?.data?.content || response?.data || 'No response';
+           
             const botMessage = { sender: 'bot', text: botMessageContent };
             setMessages(prevMessages => [...prevMessages, botMessage]);
         } catch (error) {
@@ -207,7 +200,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                 <Dropdown.Item eventKey="llama3">llama3</Dropdown.Item>
                                 <Dropdown.Item eventKey="mistral">mistral</Dropdown.Item>
                                 <Dropdown.Item eventKey="gemma2">Gemma 2</Dropdown.Item>
-                                <Dropdown.Item className='disabled' eventKey="Azure OpenAI GPT-4o">Azure OpenAI GPT-4o</Dropdown.Item>
+                                <Dropdown.Item eventKey="gpt-4o-mini">GPT-4o-mini</Dropdown.Item>
                                 <Dropdown.Item eventKey="Gemini">Gemini</Dropdown.Item>
                             </Dropdown.Menu>
                         </Dropdown>

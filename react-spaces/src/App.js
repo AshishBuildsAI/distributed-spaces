@@ -67,7 +67,7 @@ function App() {
                             selectedSpace={selectedSpace}
                         />
                     </Col>
-                    <Col md={9} className="chat-panel">
+                    <Col md={6} className="chat-panel">
                         <ChatBot selectedSpace={selectedSpace} selectedFile={selectedFile} />
                     </Col>
                 </Row>

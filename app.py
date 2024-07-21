@@ -321,8 +321,13 @@ def chat():
         ]
 
         try:
-            print(model)
-            response_message = chatIM(messages, model)
+            if model == "Gemini":
+                response_message = gemini_model.generate_content(envelope)
+                return jsonify(response_message.text), 200
+            elif model =="gpt4-o":
+                todo = "Implement openai"
+            else:
+                response_message = chatIM(messages, model)
             return jsonify(response_message), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500

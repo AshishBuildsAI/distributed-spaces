@@ -4,17 +4,6 @@ import { Card, ListGroup, Form, Button, InputGroup, Image, Spinner, Dropdown, Mo
 import ReactMarkdown from 'react-markdown';
 import { FaCog, FaCopy } from 'react-icons/fa';
 
-// Placeholder function for the Gemini model
-const generateGeminiResponse = (context, question) => {
-    // Simulate the Gemini response generation
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const responseText = `Generated Gemini response based on context: "${context}" and question: "${question}"`;
-            resolve({ text: responseText });
-        }, 1000); // Simulate a delay
-    });
-};
-
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -154,7 +143,8 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                                     </span>
                                     {message.sender === 'bot' && showCopyButton && (
                                         <FaCopy
-                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.3em', color:"yellow", background: 'black', borderRadius: '50%', padding: '2px' }}
+                                            className='btn-success'
+                                            style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.2em',  background: 'black', borderRadius: '50%', padding: '2px' }}
                                             onClick={() => handleCopyToClipboard(message.text)}
                                         />
                                     )}
@@ -176,7 +166,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                         />
                         <Button variant="primary" onClick={sendMessage} disabled={isSending}>Ask</Button>
                     </InputGroup>
-                    <div className="mt-2 text-right">
+                    <div className="mt-2 text-center">
                         <small>Powered by {selectedModel}</small>
                     </div>
                 </Card.Body>

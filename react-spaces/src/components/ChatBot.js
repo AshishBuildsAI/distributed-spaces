@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Card, ListGroup, Form, Button, InputGroup, Image, Spinner, Dropdown, Modal, Toast } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import { FaCog, FaCopy } from 'react-icons/fa';
+import dayjs from 'dayjs';
 
 const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [messages, setMessages] = useState([]);
@@ -14,6 +15,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [showCopyButton, setShowCopyButton] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [expandedImage, setExpandedImage] = useState(null);
+    const [expandedDates, setExpandedDates] = useState({});
     const chatListRef = useRef(null);
 
     const sendMessage = async () => {
@@ -155,8 +157,26 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
         setExpandedImage(null);
     };
 
-    // Combine past conversations and current messages
-    const combinedMessages = [...pastConversations, ...messages];
+    const toggleDateExpansion = (date) => {
+        setExpandedDates(prevState => ({
+            ...prevState,
+            [date]: !prevState[date]
+        }));
+    };
+
+    // Group messages by date
+    const groupMessagesByDate = (messages) => {
+        return messages.reduce((groups, message) => {
+            const date = dayjs(message.timestamp).format('YYYY-MM-DD');
+            if (!groups[date]) {
+                groups[date] = [];
+            }
+            groups[date].push(message);
+            return groups;
+        }, {});
+    };
+
+    const groupedMessages = groupMessagesByDate([...pastConversations, ...messages]);
 
     return (
         <>
@@ -176,54 +196,44 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                 </Card.Header>
                 <Card.Body style={{ display: 'flex', flexDirection: 'column', height: '85vh' }}>
                     <ListGroup className="chat-list flex-grow-1" ref={chatListRef} style={{ overflowY: 'auto' }}>
-                        {combinedMessages.map((message, index) => (
+                        {Object.keys(groupedMessages).map((date, index) => (
                             <React.Fragment key={index}>
-                                <ListGroup.Item
-                                    className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
+                                <ListGroup.Item 
+                                    className="text-center text-muted"
+                                    onClick={() => toggleDateExpansion(date)}
+                                    style={{ cursor: 'pointer' }}
                                 >
-                                    {(message.sender === 'bot' || message.sender === 'ai') && (
-                                        <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
-                                    )}
-                                    <div style={{ position: 'relative', width: '100%' }}>
-                                        <span style={{ whiteSpace: 'pre-wrap' }}>
-                                            {(message.sender === 'bot' || message.sender === 'ai') ? (
-                                                <ReactMarkdown>{message.text}</ReactMarkdown>
-                                            ) : (
-                                                <p className="text-warning">{message.text}</p>
-                                            )}
-                                        </span>
-                                        {message.sender === 'bot' && showCopyButton && (
-                                            <FaCopy
-                                                className='btn-success'
-                                                style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.2em', background: 'black', borderRadius: '50%', padding: '2px' }}
-                                                onClick={() => handleCopyToClipboard(message.text)}
-                                            />
-                                        )}
-                                    </div>
-                                    {message.sender === 'user' && (
-                                        <Image src="./user_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
-                                    )}
+                                    {dayjs(date).format('MMMM D, YYYY')}
                                 </ListGroup.Item>
-                                {message.sender === 'bot' && message.citations && message.citations.length > 0 && (
-                                    <Card className="mb-2" style={{ marginLeft: '40px', marginRight: '40px' }}>
-                                        <Card.Header>Citations</Card.Header>
-                                        <Card.Body>
-                                            {message.citations.slice(0, 2).map((citation, citationIndex) => (
-                                                <div key={citationIndex} className="d-flex mb-2">
-                                                    <Image
-                                                        src={citation.thumbnail}
-                                                        rounded
-                                                        style={{ width: '50px', height: '50px', marginRight: '10px', cursor: 'pointer' }}
-                                                        onClick={() => handleImageExpand(citation.thumbnail)}
-                                                    />
-                                                    <div>
-                                                        <div>{citation.fileName}</div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </Card.Body>
-                                    </Card>
-                                )}
+                                {expandedDates[date] && groupedMessages[date].map((message, index) => (
+                                    <ListGroup.Item
+                                        key={index}
+                                        className={`d-flex ${message.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
+                                    >
+                                        {(message.sender === 'bot' || message.sender === 'ai') && (
+                                            <Image src="./bot_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginRight: '10px' }} />
+                                        )}
+                                        <div style={{ position: 'relative', width: '100%' }}>
+                                            <span style={{ whiteSpace: 'pre-wrap' }}>
+                                                {(message.sender === 'bot' || message.sender === 'ai') ? (
+                                                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                                                ) : (
+                                                    <p className="text-warning">{message.text}</p>
+                                                )}
+                                            </span>
+                                            {(message.sender === 'bot' || message.sender === 'ai') && showCopyButton && (
+                                                <FaCopy
+                                                    className='btn-success'
+                                                    style={{ position: 'absolute', bottom: '10px', right: '10px', cursor: 'pointer', fontSize: '1.2em', background: 'black', borderRadius: '50%', padding: '2px' }}
+                                                    onClick={() => handleCopyToClipboard(message.text)}
+                                                />
+                                            )}
+                                        </div>
+                                        {message.sender === 'user' && (
+                                            <Image src="./user_avatar.png" roundedCircle style={{ width: '30px', height: '30px', marginLeft: '10px' }} />
+                                        )}
+                                    </ListGroup.Item>
+                                ))}
                             </React.Fragment>
                         ))}
                     </ListGroup>

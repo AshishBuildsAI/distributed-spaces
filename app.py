@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file,send_from_directory, abort
 from flask_cors import CORS
 import os
 from io import BytesIO
@@ -156,6 +156,35 @@ def save_ocr_result(source, pageno, imagesource, ocrtext, embedding, cost, metad
         logging.error(f"Error saving OCR result: {e}")
         raise
     return cur.fetchone()[0]
+
+@app.route('/files', methods=['POST'])
+def serve_file():
+    try:
+        BASE_DIRECTORY = "spaces"
+        data = request.get_json()
+        space = data.get('space')
+        source = data.get('source')
+        filename = data.get('filename')
+
+        if not space or not source or not filename:
+            abort(400, description="Invalid request, 'space', 'source', and 'filename' are required")
+
+        pdf_name, _ = os.path.splitext(source)
+
+        if filename.endswith('.png'):
+            file_path = os.path.join(BASE_DIRECTORY, space, pdf_name, filename)
+        else:
+            file_path = os.path.join(BASE_DIRECTORY, space, filename)
+        
+        if not os.path.abspath(file_path).startswith(os.path.abspath(BASE_DIRECTORY)):
+            abort(403)
+
+        directory = os.path.join(BASE_DIRECTORY, space, pdf_name) if filename.endswith('.png') else os.path.join(BASE_DIRECTORY, space)
+        return send_from_directory(directory, filename)
+    except FileNotFoundError:
+        abort(404)
+    except Exception as e:
+        abort(500, description=str(e))
 
 @app.route('/create_space', methods=['POST'])
 def create_space():
@@ -480,3 +509,43 @@ if __name__ == '__main__':
     if not os.path.exists(ROOT_DIR):
         os.makedirs(ROOT_DIR)
     app.run(debug=True)
+def serve_file():
+    try:
+
+        # Get JSON data from the request
+        data = request.get_json()
+        space = data.get('space')
+        source = data.get('source')
+        filename = data.get('filename')
+
+        if not space or not source or not filename:
+            abort(400, description="Invalid request, 'space', 'source' and 'filename' are required")
+
+        # Construct the images folder name from the PDF file name
+        pdf_name, _ = os.path.splitext(source)
+
+        # Check if the request is for an image or a PDF
+        if filename.endswith('.png'):
+            # Construct the full file path for the image
+            file_path = os.path.join(BASE_DIRECTORY, space, pdf_name, filename)
+        else:
+            # Construct the full file path for the PDF
+            file_path = os.path.join(BASE_DIRECTORY, space, filename)
+        
+        # Debugging output to verify file paths
+        print("Requested file path:", file_path)
+
+        # Check if the constructed path is within the BASE_DIRECTORY
+        if not os.path.abspath(file_path).startswith(os.path.abspath(BASE_DIRECTORY)):
+            print("File path is outside the base directory")
+            abort(403)
+
+        # Serve the file from the constructed path
+        directory = os.path.join(BASE_DIRECTORY, space, pdf_name) if filename.endswith('.png') else os.path.join(BASE_DIRECTORY, space)
+        return send_from_directory(directory, filename)
+    except FileNotFoundError:
+        print("File not found:", file_path)
+        abort(404)
+    except Exception as e:
+        print("Error:", str(e))
+        abort(500, description=str(e))

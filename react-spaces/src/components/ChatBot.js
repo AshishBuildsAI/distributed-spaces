@@ -16,7 +16,13 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [showToast, setShowToast] = useState(false);
     const [expandedImage, setExpandedImage] = useState(null);
     const [expandedDates, setExpandedDates] = useState({});
+    const [isAdmin, setIsAdmin] = useState(false);
     const chatListRef = useRef(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        setIsAdmin(params.has('admin'));
+    }, []);
 
     const sendMessage = async () => {
         if (!input.trim() || !selectedSpace) {
@@ -190,7 +196,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                             {isSending && <Spinner animation="border" size="sm" role="status" className="mr-2">
                                 <span className="sr-only"></span>
                             </Spinner>}
-                            <FaCog style={{ cursor: 'pointer' }} onClick={handleSettingsShow} />
+                            {isAdmin && <FaCog style={{ cursor: 'pointer' }} onClick={handleSettingsShow} />}
                         </div>
                     </div>
                 </Card.Header>

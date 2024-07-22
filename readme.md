@@ -1,24 +1,27 @@
-# Spaces App
+# Spaces API
 
-**Spaces** is a versatile document management and question-answering tool that empowers users to upload, organize, and interact with their PDF documents efficiently. The app features flexible architecture, allowing plug-and-play components and cloud-native deployment. Users can create folders called "spaces," add documents, and leverage powerful AI capabilities to generate knowledge maps and extract information seamlessly. The app offers both open-source and premium versions to cater to a wide range of users and organizations.
+**Spaces** api is a simple yet powerful RAG question-answering tool, it allows creating remote spaces (folders) and upload documents that you want to talk to or ask questions to. 
 
+It is designed for managing, indexing, and retrieving information from documents within categorized spaces, making it useful for organizing and interacting with large amounts of documentation.
+
+**Screenshots**
+![demo showing anwers](/demos/demo.png?raw=true "Screenshots")
+
+![alt text](/demos/demo2.png)
 ## Features
 
-- **Generation and Knowledge Map**: Automatically generate comprehensive knowledge maps from your documents, providing a visual and interactive way to explore the information.
-- **Privacy and IP Security**: Ensures the highest level of security for your documents, protecting your intellectual property and maintaining privacy.
-- **Community Edition**: Open-source version available for individual users and small organizations.
-- **Enterprise Edition**: Premium version with enhanced features, support, and scalability for larger organizations.
-- **Plugins and Add-Ons**:
-  - **Bulletin Generator**: Create automated bulletins based on document content.
-  - **Table Parser**: Extract and structure data from tables within your documents.
-  - **Image Parser**: Analyze and extract information from images embedded in your PDFs.
-  - **RFQ (Request for Quotation)**: Manage and generate RFQs directly from your document content.
-  - **More Add-Ons**: Easily integrate additional functionalities as per your requirements.
+**Spaces as anything!** :
+You can use space for managing, indexing, and retrieving any kind of information by containing them in spaces 
 
-## Flexibility in Architecture
+**Memory**: Remembers past conversations and uses it as memory to answer questions much faster and efficiently.
 
-- **Plug-and-Play**: Easily add or remove components and features to customize the app according to your needs.
-- **Cloud Native**: Designed for cloud deployment, ensuring scalability, reliability, and ease of management.
+**Chat with your documentation**
+Users can interact with specific documents within a space, such as asking questions about the document content.
+The app provides detailed responses based on the document content.
+
+**Information Tagging and Retrieval**:
+Users can request specific information from a document using tags (e.g., "Get me the process information for tag 160-ZV-0291").
+The app retrieves and displays the relevant information based on the tag.
 
 ## Getting Started
 

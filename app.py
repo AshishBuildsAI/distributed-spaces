@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, send_file,send_from_directory, abort
 from flask_cors import CORS
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from io import BytesIO
 from PIL import Image
 from werkzeug.utils import secure_filename

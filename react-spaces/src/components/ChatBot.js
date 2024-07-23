@@ -61,8 +61,8 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                     }
                 }
             );
-            botMessageContent = response?.data?.content || response?.data || 'No response';
-            citations = response?.data?.citations || [];
+            botMessageContent = response?.data?.content || response?.data || response?.data?.text || 'No response';
+            citations = response?.data?.citations || response?.data?.citations || [];
 
             const botMessage = { sender: 'bot', text: botMessageContent, citations: citations };
             setMessages(prevMessages => [...prevMessages, botMessage]);
@@ -82,7 +82,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
                 params: { space: spaceName, filename: fileName },
                 headers: { 'Content-Type': 'application/json' }
             });
-
+            
             console.log('Response data:', response.data);
             const conversationsData = response.data.conversations;
 

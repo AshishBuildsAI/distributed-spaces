@@ -168,10 +168,16 @@ class DataKeeper:
     def create_conversation(self, sender, text, space_id, file_id, related_message_id, user_ip, embedding):
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO org.spaces_conversations (sender, text, timestamp, space_id, file_id, related_message_id, user_ip, embedding)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
-                """, (sender, text, datetime.datetime.today(), space_id, file_id, related_message_id, user_ip, embedding))
+                if file_id :
+                    cursor.execute("""
+                        INSERT INTO org.spaces_conversations (sender, text, timestamp, space_id, file_id, related_message_id, user_ip, embedding)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;
+                    """, (sender, text, datetime.datetime.today(), space_id, file_id, related_message_id, user_ip, embedding))
+                else:
+                    cursor.execute("""
+                        INSERT INTO org.spaces_conversations (sender, text, timestamp, space_id, related_message_id, user_ip, embedding)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;
+                    """, (sender, text, datetime.datetime.today(), space_id, related_message_id, user_ip, embedding))
                 self.connection.commit()
                 return cursor.fetchone()[0]
         except psycopg2.Error as e:

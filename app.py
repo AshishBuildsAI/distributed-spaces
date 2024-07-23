@@ -335,8 +335,9 @@ def chat():
     model = data.get('model')
     spaces = dbkeeper.get_space_by_name(space)
     space_id = spaces["id"]
-    files = dbkeeper.get_file_by_name(filename)
-    file_id = files["id"]
+    if filename:
+        files = dbkeeper.get_file_by_name(filename)
+        file_id = files["id"]
     user_ip = request.remote_addr
     if not space or not question:
         return jsonify({"error": "Space and query are required"}), 400
@@ -359,15 +360,21 @@ def chat():
         try:
             if model == "Gemini":
                 response_message = gemini_model.generate_content(envelope)
-                response = {"text": response_message.text, "citations": citations}
+                response = {"content": response_message.text, "citations": citations}
                 # Create the conversation in DB
                 question_to_index = f"{space}/{filename} - {question}"  
                 question_to_indexembed =  get_embeddings(question_to_index)
-                inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
+                if filename :
+                    inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
+                else:
+                    inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=None, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
                 
                 response_to_index = f"{space}/{filename} - {response_message.text}"  
                 response_to_indexembed =  get_embeddings(response_to_index)
-                dbkeeper.create_conversation(sender="ai", text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+                if filename :
+                    dbkeeper.create_conversation(sender="ai", text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+                else:
+                    dbkeeper.create_conversation(sender="ai", text=response_to_index, space_id = space_id, file_id=None, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
                 return jsonify(response), 200
             elif model == "gpt4-o":
                 todo = "Implement openai"
@@ -377,11 +384,17 @@ def chat():
                 # Create the conversation in DB
                 question_to_index = f"{space}/{filename} - {question}"  
                 question_to_indexembed =  get_embeddings(question_to_index)
-                inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
-                
+                if filename: 
+                    inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=file_id, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
+                else:
+                    inserted = dbkeeper.create_conversation(sender="user", text=question_to_index, space_id = space_id, file_id=None, related_message_id=None, user_ip=user_ip, embedding=question_to_indexembed)
                 response_to_index = f"{space}/{filename} - {response_message['content']}"  
                 response_to_indexembed =  get_embeddings(response_to_index)
-                dbkeeper.create_conversation(sender='ai', text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+
+                if filename:
+                    dbkeeper.create_conversation(sender='ai', text=response_to_index, space_id = space_id, file_id=file_id, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
+                else:
+                    dbkeeper.create_conversation(sender='ai', text=response_to_index, space_id = space_id, file_id=None, related_message_id=int(inserted), user_ip=user_ip, embedding=response_to_indexembed)
             
             return jsonify(response_message), 200
         except Exception as e:

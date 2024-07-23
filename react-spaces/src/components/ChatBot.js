@@ -10,7 +10,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
     const [pastConversations, setPastConversations] = useState([]);
     const [input, setInput] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const [selectedModel, setSelectedModel] = useState('wizardlm2');
+    const [selectedModel, setSelectedModel] = useState('Gemini');
     const [showSettings, setShowSettings] = useState(false);
     const [showCopyButton, setShowCopyButton] = useState(false);
     const [showToast, setShowToast] = useState(false);

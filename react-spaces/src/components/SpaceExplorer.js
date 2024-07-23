@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './SpaceExplorer.css';
 import { AiOutlineUpload } from 'react-icons/ai';
 
-const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile }) => {
+const SpaceExplorer = ({ spaces = [], setSelectedFile, setSelectedSpace, selectedFile }) => {
     const [file, setFile] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
@@ -18,7 +18,7 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
             setSelectedSpace(firstSpace);
             setSelectedSpaceState(firstSpace);
         }
-    }, [spaces]);
+    }, [spaces, setSelectedSpace]);
 
     const fetchFiles = (space) => {
         setSelectedSpace(space);
@@ -27,9 +27,10 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
     };
 
     const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-        if (e.target.files[0]) {
-            uploadFile(e.target.files[0]);
+        const selectedFile = e.target.files[0];
+        setFile(selectedFile);
+        if (selectedFile) {
+            uploadFile(selectedFile);
         }
     };
 
@@ -53,11 +54,11 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                 });
                 toast.success(response.data.message, {
                     position: "top-center",
-                    autoClose: 5000,
+                    autoClose: 2000,
                     hideProgressBar: false,
                     closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
+                    pauseOnHover: false,
+                    draggable: false,
                     progress: undefined,
                 });
                 if (fileInputRef.current) {
@@ -65,27 +66,14 @@ const SpaceExplorer = ({ spaces, setSelectedFile, setSelectedSpace, selectedFile
                 }
                 setFile(null); // Clear file state
                 setUploadProgress(0); // Reset upload progress
+
+                // Refresh file list after successful upload
+                fetchFiles(selectedSpaceState);
             } catch (error) {
-                toast.error('Error uploading file', {
-                    position: "top-center",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
+                toast.error('Error uploading file');
             }
         } else {
-            toast.error('Please select a space and a file', {
-                position: "top-center",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
+            toast.error('Please select a space and a file');
         }
     };
 

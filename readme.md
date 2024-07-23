@@ -4,18 +4,17 @@
 
 It is designed for managing, indexing, and retrieving information from documents within categorized spaces, making it useful for organizing and interacting with large amounts of documentation.
 
-**Screenshots**
+## Features
 
 *Creating a New Space*
 ![alt text](/demos/newspace.png)
 
-*Answering questions about the resume* 
+*Answering questions about a candidate for screening round* 
 ![demo showing anwers](/demos/demo.png?raw=true "Question & Answer")
 
 *For every question you can choose a LLM of your choice depending on the complexity of infomration architecture in your document and past experience* 
 ![demo showing anwers](/demos/chooselocalllms.png "Choose your favourite LLM")
 
-## Features
 
 **Spaces as anything!** :
 You can use space for managing, indexing, and retrieving any kind of information by containing them in spaces 

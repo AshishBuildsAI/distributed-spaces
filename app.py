@@ -27,8 +27,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from sqltools.dataaccess import DataKeeper
 dbkeeper = DataKeeper()
 
-ocr = PaddleOCR(use_angle_cls=True, lang='en')
-
+#ocr = PaddleOCR(use_angle_cls=True, lang='en')
+#ocr = None
 GOOGLE_API_KEY = os.environ["GEMINI_API_KEY"]
 genai.configure(api_key=GOOGLE_API_KEY)
 gemini_model = genai.GenerativeModel('gemini-1.5-flash')
@@ -53,14 +53,14 @@ cur = conn.cursor()
 model_dir = "models/all-MiniLM-L6-v2"
 embedding_model = ''
 logging.basicConfig(level=logging.DEBUG)
-# Example usage:
-db_config = {
-    'dbname': 'your_database',
-    'user': 'your_user',
-    'password': 'your_password',
-    'host': 'your_host',
-    'port': 'your_port'
-}
+# # Example usage:
+# db_config = {
+#     'dbname': 'your_database',
+#     'user': 'your_user',
+#     'password': 'your_password',
+#     'host': 'your_host',
+#     'port': 'your_port'
+# }
 
 #db_manager = DatabaseManager(db_config)
 # Check if the model directory exists
@@ -74,7 +74,11 @@ else:
 
 # Function to perform OCR on an image
 def perform_ocr(image_path):
-    result = ocr.ocr(image_path, cls=True)
+    ocr = None 
+    if ocr is None:
+        ocr = PaddleOCR(use_angle_cls=True, lang='en') 
+    #else:
+    result = ocr.ocr(image_path, cls=True)      
     ocr_text = "\n".join([line[1][0] for line in result[0]])
     return ocr_text
 

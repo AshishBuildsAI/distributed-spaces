@@ -78,8 +78,11 @@ def perform_ocr(image_path):
     if ocr is None:
         ocr = PaddleOCR(use_angle_cls=True, lang='en') 
     #else:
-    result = ocr.ocr(image_path, cls=True)      
-    ocr_text = "\n".join([line[1][0] for line in result[0]])
+    try:
+        result = ocr.ocr(image_path, cls=True)      
+        ocr_text = "\n".join([line[1][0] for line in result[0]])
+    except Exception as e:
+        logging.exception(e)
     return ocr_text
 
 def get_embeddings(content):

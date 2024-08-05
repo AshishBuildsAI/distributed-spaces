@@ -15,7 +15,7 @@ const AdminPanel = ({ selectedSpace, selectedFile, setSelectedFile }) => {
             setProgress(0);
             try {
                 const response = await axios.post(
-                    `http://127.0.0.1:5000/convert_pdf/${selectedFile.name}`,
+                    `http://192.168.1.3:5000/convert_pdf/${selectedFile.name}`,
                     { space: selectedSpace.name },
                     {
                         onUploadProgress: (progressEvent) => {

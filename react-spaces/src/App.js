@@ -19,12 +19,12 @@ function App() {
 
     const fetchSpaces = useCallback(async () => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/list_spaces');
+            const response = await axios.get('http://192.168.1.3:5000/list_spaces');
             const spacesData = response.data.spaces;
             if (Array.isArray(spacesData)) {
                 const spaceObjects = await Promise.all(
                     spacesData.map(async (spaceName) => {
-                        const filesResponse = await axios.get(`http://127.0.0.1:5000/list_files/${spaceName}`);
+                        const filesResponse = await axios.get(`http://192.168.1.3:5000/list_files/${spaceName}`);
                         const files = filesResponse.data.files.map(file => ({
                             name: file.name,
                             isIndexed: file.isIndexed

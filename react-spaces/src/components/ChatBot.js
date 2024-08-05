@@ -53,7 +53,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
             }
 
             const response = await axios.post(
-                'http://127.0.0.1:5000/chat', // URL to the new API endpoint
+                'http://192.168.1.3:5000/chat', // URL to the new API endpoint
                 payload,
                 {
                     headers: {
@@ -78,7 +78,7 @@ const ChatBot = ({ selectedSpace, selectedFile }) => {
 
     const fetchPastConversations = async (spaceName, fileName) => {
         try {
-            const response = await axios.get('http://127.0.0.1:5000/get_conversations', {
+            const response = await axios.get('http://192.168.1.3:5000/get_conversations', {
                 params: { space: spaceName, filename: fileName },
                 headers: { 'Content-Type': 'application/json' }
             });

@@ -9,7 +9,7 @@ const CreateSpace = ({ fetchSpaces }) => {
 
     const createSpace = async () => {
         try {
-            const response = await axios.post('http://127.0.0.1:5000/create_space', { spaceName });
+            const response = await axios.post('http://192.168.1.3:5000/create_space', { spaceName });
             toast.success(response.data.message, {
                 position: "top-center",
                 autoClose: 5000,

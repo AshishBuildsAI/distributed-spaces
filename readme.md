@@ -164,6 +164,6 @@ Ensure that pg_config is in your PATH:
 ```
 export PATH=/usr/local/opt/postgresql/bin:$PATH
 ```
-Adoption and Contributions
+## Adoption and Contributions
 
-Your organization uses authentik? We'd love to add your logo to the readme and our website! Email us @ us@tensorkart.com or open a GitHub Issue/PR! For more information on how to contribute to spaces, please refer to our CONTRIBUTING.md file.
+Your organization uses ```spaces```? We'd love to add your logo to the readme and our website! Email us @ ```mailto:us@tensorkart.com``` or open a GitHub Issue/PR! For more information on how to contribute to spaces, please refer to our CONTRIBUTING.md file.

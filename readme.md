@@ -51,5 +51,11 @@ Contributions are welcome! Whether you're fixing bugs, improving documentation, 
 
 Found a bug? Want a feature? Open an issue using the appropriate template and label it accordingly.
 
+## Specification Reference
+
+This project implements the [Distributed Multi-Agent Control Protocol (DMCP)](https://github.com/AshishBuildsAI/distributed-mcp), which defines the agent lifecycle, messaging formats, and orchestration logic used within `distributed-spaces`.
+
+For details on the protocol, message schema, and coordination model, refer to the [DMCP Specification](https://github.com/AshishBuildsAI/distributed-mcp).
+
 ---
 Let's build distributed intelligence together!
